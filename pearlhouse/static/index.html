@@ -1,0 +1,2646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PearlHouse — Milk Tea POS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+:root {
+  --brown-dark: #3D1C0A;
+  --brown-mid: #6B3F1F;
+  --brown-warm: #9B6240;
+  --brown-light: #C8956C;
+  --cream: #FDF6EE;
+  --cream-dark: #F0E4D4;
+  --cream-mid: #E8D5BE;
+  --accent: #D4A853;
+  --accent-light: #F0C878;
+  --green: #4A7C59;
+  --red: #C0392B;
+  --sidebar-w: 220px;
+  --nav-h: 56px;
+  --shadow: 0 4px 24px rgba(61,28,10,0.10);
+  --shadow-lg: 0 8px 40px rgba(61,28,10,0.18);
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--brown-dark); overflow: hidden; }
+
+/* ─── LOGIN ─────────────────────────────────────────── */
+#login-screen {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--brown-dark);
+  overflow: hidden;
+}
+.login-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 70%, #6B3F1F55 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, #C8956C33 0%, transparent 50%);
+}
+.login-bubbles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.bubble {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(200,149,108,0.18), rgba(107,63,31,0.08));
+  border: 1px solid rgba(200,149,108,0.12);
+}
+.login-card {
+  position: relative; z-index: 2;
+  background: var(--cream); border-radius: 24px;
+  padding: 48px 44px; width: 420px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+  opacity: 0; transform: translateY(40px);
+}
+.login-logo { text-align: center; margin-bottom: 28px; }
+.login-logo .emoji { font-size: 48px; display: block; margin-bottom: 8px; }
+.login-logo h1 { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--brown-dark); }
+.login-logo p { font-size: 13px; color: var(--brown-warm); margin-top: 2px; }
+.role-tabs { display: flex; background: var(--cream-dark); border-radius: 10px; padding: 4px; margin-bottom: 24px; }
+.role-tab {
+  flex: 1; text-align: center; padding: 8px; border-radius: 7px;
+  cursor: pointer; font-size: 14px; font-weight: 500; color: var(--brown-warm);
+  transition: all .2s; border: none; background: transparent;
+}
+.role-tab.active { background: var(--brown-dark); color: var(--cream); }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--brown-mid); margin-bottom: 6px; letter-spacing: .04em; text-transform: uppercase; }
+.form-group input {
+  width: 100%; padding: 12px 14px; border-radius: 10px;
+  border: 1.5px solid var(--cream-mid); background: var(--cream);
+  font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--brown-dark);
+  outline: none; transition: border-color .2s;
+}
+.form-group input:focus { border-color: var(--brown-light); }
+.login-btn {
+  width: 100%; padding: 13px; background: var(--brown-dark); color: var(--cream);
+  border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 4px;
+  transition: background .2s, transform .1s;
+}
+.login-btn:hover { background: var(--brown-mid); }
+.login-btn:active { transform: scale(.98); }
+.login-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 10px; display: none; }
+
+/* ─── APP SHELL ─────────────────────────────────────── */
+#app { display: none; height: 100vh; overflow: hidden; }
+
+/* TOP NAV */
+.topnav {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--nav-h); z-index: 100;
+  background: var(--brown-dark); display: flex; align-items: center;
+  padding: 0 20px 0 0; gap: 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+}
+.nav-brand {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  display: flex; align-items: center; gap: 10px; padding: 0 20px;
+  border-right: 1px solid rgba(255,255,255,0.07);
+}
+.nav-brand .logo-icon { font-size: 24px; }
+.nav-brand-text h2 { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--cream); line-height: 1.1; }
+.nav-brand-text p { font-size: 10px; color: var(--brown-light); letter-spacing: .06em; text-transform: uppercase; }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.notif-btn {
+  position: relative; background: rgba(255,255,255,0.08); border: none;
+  width: 38px; height: 38px; border-radius: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--cream); font-size: 17px; transition: background .2s;
+}
+.notif-btn:hover { background: rgba(255,255,255,0.15); }
+.notif-badge {
+  position: absolute; top: 4px; right: 4px;
+  background: var(--accent); color: var(--brown-dark);
+  font-size: 9px; font-weight: 700; min-width: 16px; height: 16px;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  padding: 0 3px; display: none;
+}
+.user-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.08); border-radius: 10px; padding: 5px 12px 5px 6px;
+}
+.user-avatar {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: var(--brown-warm); display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--cream); font-weight: 600; overflow: hidden;
+}
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-name { font-size: 13px; font-weight: 500; color: var(--cream); }
+.logout-btn {
+  background: rgba(255,255,255,0.08); border: none; color: var(--cream);
+  padding: 7px 14px; border-radius: 9px; font-size: 13px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .2s;
+}
+.logout-btn:hover { background: rgba(255,255,255,0.18); }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; left: 0; top: var(--nav-h); bottom: 0;
+  width: var(--sidebar-w); background: #2C1308;
+  padding: 16px 10px; overflow-y: auto; z-index: 90;
+}
+.sidebar-section { margin-bottom: 8px; }
+.sidebar-label { font-size: 10px; font-weight: 600; color: rgba(200,149,108,0.5); letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer;
+  color: rgba(253,246,238,0.65); font-size: 14px; font-weight: 500;
+  transition: all .2s; margin-bottom: 2px; border: none; background: transparent;
+  width: 100%; text-align: left;
+}
+.nav-item .icon { font-size: 17px; width: 22px; text-align: center; }
+.nav-item:hover { background: rgba(255,255,255,0.07); color: var(--cream); }
+.nav-item.active { background: var(--brown-mid); color: var(--cream); }
+
+/* MAIN CONTENT */
+.main-content {
+  margin-left: var(--sidebar-w); margin-top: var(--nav-h);
+  height: calc(100vh - var(--nav-h)); overflow-y: auto;
+  background: var(--cream);
+}
+.page { display: none; padding: 28px; min-height: 100%; }
+.page.active { display: block; }
+.page-header { margin-bottom: 24px; }
+.page-header h1 { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--brown-dark); }
+.page-header p { font-size: 14px; color: var(--brown-warm); margin-top: 4px; }
+
+/* old stat-grid replaced above */
+
+/* ─── POS NEW ORDER ──────────────────────────────────── */
+.pos-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; height: calc(100vh - var(--nav-h) - 56px); }
+.pos-menu { overflow-y: auto; padding-right: 4px; }
+.search-bar {
+  position: relative; margin-bottom: 14px;
+}
+.search-bar input {
+  width: 100%; padding: 11px 14px 11px 40px;
+  border-radius: var(--radius-sm); border: 1.5px solid var(--cream-mid);
+  background: white; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--brown-dark); outline: none; transition: border-color .2s;
+}
+.search-bar input:focus { border-color: var(--brown-light); }
+.search-bar .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--brown-warm); font-size: 16px; }
+.cat-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.cat-tab {
+  padding: 7px 16px; border-radius: 20px; border: 1.5px solid var(--cream-mid);
+  background: white; color: var(--brown-warm); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+}
+.cat-tab.active { background: var(--brown-dark); color: var(--cream); border-color: var(--brown-dark); }
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 18px; }
+.menu-card {
+  all: unset;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  background: white;
+  border-radius: calc(var(--radius) * 1.1);
+  border: 1px solid rgba(155,98,64,0.14);
+  box-shadow: 0 18px 48px rgba(61,28,10,0.08);
+  cursor: pointer;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  overflow: hidden;
+}
+.menu-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 60px rgba(61,28,10,0.14);
+  border-color: rgba(155,98,64,0.24);
+}
+.menu-card.unavailable {
+  opacity: .6;
+  pointer-events: none;
+}
+.menu-card .card-image-wrapper {
+  position: relative;
+  height: 180px;
+  min-height: 180px;
+  background: linear-gradient(180deg, rgba(253,246,238,0.9), rgba(255,255,255,0.7));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.menu-card .card-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.menu-card .card-image-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  background: var(--cream);
+  font-size: 40px;
+}
+.menu-card .card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 18px 20px;
+  text-align: left;
+}
+.menu-card .card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--brown-dark);
+  line-height: 1.3;
+}
+.menu-card .card-category {
+  font-size: 13px;
+  color: var(--brown-warm);
+}
+.menu-card .card-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.menu-card .card-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--brown-dark);
+}
+.menu-card .card-stock {
+  font-size: 13px;
+  color: var(--green);
+  font-weight: 600;
+}
+.menu-card.unavailable .card-stock {
+  color: var(--red);
+}
+
+/* CART */
+.cart-panel {
+  background: white; border-radius: var(--radius);
+  border: 1.5px solid var(--cream-mid); box-shadow: var(--shadow);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.cart-header {
+  padding: 16px 18px; background: var(--brown-dark); color: var(--cream);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cart-header h3 { font-family: 'Playfair Display', serif; font-size: 17px; }
+.cart-header span { font-size: 12px; opacity: .7; }
+.cart-items { flex: 1; overflow-y: auto; padding: 12px; }
+.cart-empty { text-align: center; padding: 40px 20px; color: var(--brown-warm); font-size: 14px; }
+.cart-empty .empty-icon { font-size: 40px; margin-bottom: 10px; }
+.cart-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--cream-dark);
+}
+.cart-item:last-child { border-bottom: none; }
+.cart-item-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--brown-dark); }
+.cart-item-price { font-size: 13px; font-weight: 700; color: var(--brown-mid); min-width: 54px; text-align: right; }
+.qty-ctrl { display: flex; align-items: center; gap: 6px; }
+.qty-btn {
+  width: 24px; height: 24px; border-radius: 6px; border: none;
+  background: var(--cream-dark); color: var(--brown-dark); font-size: 15px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.qty-btn:hover { background: var(--brown-light); color: white; }
+.qty-num { font-size: 13px; font-weight: 700; min-width: 18px; text-align: center; }
+.remove-btn { background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; padding: 2px; transition: color .15s; }
+.remove-btn:hover { color: var(--red); }
+.cart-footer { padding: 14px 16px; border-top: 1px solid var(--cream-dark); }
+.cart-total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.cart-total-label { font-size: 13px; font-weight: 500; color: var(--brown-warm); }
+.cart-total-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--brown-dark); }
+.pay-tabs { display: flex; background: var(--cream-dark); border-radius: 8px; padding: 3px; margin-bottom: 12px; }
+.pay-tab { flex: 1; text-align: center; padding: 7px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--brown-warm); transition: all .18s; border: none; background: transparent; font-family: 'DM Sans',sans-serif; }
+.pay-tab.active { background: white; color: var(--brown-dark); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+.pay-panel { display: none; }
+.pay-panel.active { display: block; }
+.cash-input-wrap { position: relative; margin-bottom: 8px; }
+.cash-prefix { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--brown-warm); }
+.cash-input {
+  width: 100%; padding: 10px 12px 10px 26px; border-radius: 8px;
+  border: 1.5px solid var(--cream-mid); font-family: 'DM Sans',sans-serif; font-size: 15px; outline: none;
+}
+.cash-input:focus { border-color: var(--brown-light); }
+.change-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; }
+.change-val { font-weight: 700; }
+.change-val.negative { color: var(--red); }
+.gcash-box { text-align: center; padding: 10px 0; }
+.gcash-qr {
+  width: 120px; height: 120px; margin: 0 auto 8px; border-radius: 10px;
+  background: var(--cream-dark); display: flex; align-items: center; justify-content: center;
+  font-size: 40px; border: 2px dashed var(--cream-mid); overflow: hidden; cursor: pointer;
+}
+.gcash-qr img { width: 100%; height: 100%; object-fit: cover; }
+.gcash-num { font-size: 13px; color: var(--brown-warm); }
+.place-btn {
+  width: 100%; padding: 13px; background: var(--brown-dark); color: var(--cream);
+  border: none; border-radius: 10px; font-family: 'DM Sans',sans-serif;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s;
+}
+.place-btn:hover { background: var(--brown-mid); }
+.place-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ─── ORDER QUEUE ─────────────────────────────────────── */
+.queue-table { width: 100%; border-collapse: collapse; background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.queue-table th { background: var(--brown-dark); color: var(--cream); padding: 13px 16px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; text-align: left; }
+.queue-table td { padding: 12px 16px; border-bottom: 1px solid var(--cream-dark); font-size: 14px; color: var(--brown-dark); vertical-align: middle; }
+.queue-table tr:last-child td { border-bottom: none; }
+.queue-table tr:hover td { background: var(--cream); }
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.status-badge.preparing { background: #FFF3CD; color: #856404; }
+.status-badge.ready { background: #D1E7DD; color: #0A5C2A; }
+.status-badge.served { background: #E9ECEF; color: #6C757D; }
+.advance-btn {
+  padding: 5px 12px; border-radius: 7px; border: none; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans',sans-serif; transition: all .2s;
+  background: var(--brown-mid); color: white;
+}
+.advance-btn:hover { background: var(--brown-dark); }
+.advance-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ─── MENU MANAGEMENT ────────────────────────────────── */
+.menu-mgmt-grid { display: flex; flex-direction: column; gap: 12px; }
+.mgmt-card {
+  background: white; border-radius: var(--radius); padding: 16px;
+  border: 1.5px solid var(--cream-mid); box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 16px;
+}
+.mgmt-thumb {
+  width: 48px; height: 48px; border-radius: 10px; background: var(--cream-dark);
+  display: flex; align-items: center; justify-content: center; font-size: 26px;
+  flex-shrink: 0; overflow: hidden; cursor: pointer; border: 2px solid var(--cream-mid);
+}
+.mgmt-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.mgmt-info { flex: 1; min-width: 0; }
+.mgmt-name { font-size: 16px; font-weight: 600; color: var(--brown-dark); margin-bottom: 4px; }
+.mgmt-details { font-size: 13px; color: var(--brown-warm); }
+.mgmt-actions { display: flex; align-items: center; gap: 8px; }
+.edit-btn {
+  background: var(--brown-dark); color: var(--cream); border: none;
+  padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans',sans-serif; transition: background .2s;
+}
+.edit-btn:hover { background: var(--brown-mid); }
+.del-btn { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; transition: color .15s; }
+.del-btn:hover { color: var(--red); }
+.add-item-form {
+  background: white; border-radius: var(--radius); padding: 22px;
+  border: 1.5px solid var(--cream-mid); box-shadow: var(--shadow); margin-bottom: 24px;
+}
+.add-item-form h3 { font-family: 'Playfair Display',serif; font-size: 17px; margin-bottom: 16px; color: var(--brown-dark); }
+.form-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; margin-bottom: 12px; }
+.form-field label { display: block; font-size: 11px; font-weight: 600; color: var(--brown-warm); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+.form-field input, .form-field select {
+  width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid var(--cream-mid);
+  font-family: 'DM Sans',sans-serif; font-size: 14px; outline: none; color: var(--brown-dark); transition: border-color .2s;
+}
+.form-field input:focus, .form-field select:focus { border-color: var(--brown-light); }
+.add-btn {
+  padding: 10px 22px; background: var(--brown-dark); color: var(--cream);
+  border: none; border-radius: 8px; font-family: 'DM Sans',sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s;
+}
+.add-btn:hover { background: var(--brown-mid); }
+
+/* ─── REPORTS ────────────────────────────────────────── */
+.reports-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.report-card { background: white; border-radius: var(--radius); padding: 22px; border: 1.5px solid var(--cream-mid); box-shadow: var(--shadow); }
+.report-card h3 { font-family: 'Playfair Display',serif; font-size: 17px; color: var(--brown-dark); margin-bottom: 14px; }
+.filter-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.filter-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--cream-mid); background: white; font-size: 12px; font-weight: 500; color: var(--brown-warm); cursor: pointer; transition: all .2s; font-family: 'DM Sans',sans-serif; }
+.filter-btn.active { background: var(--brown-dark); color: var(--cream); border-color: var(--brown-dark); }
+#reportCanvas { width: 100% !important; max-height: 260px; }
+.legend-list { margin-top: 14px; }
+.legend-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--cream-dark); font-size: 13px; }
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+.legend-label { flex: 1; color: var(--brown-dark); }
+.legend-val { font-weight: 600; color: var(--brown-mid); }
+
+/* ─── TRANSACTIONS TABLE ──────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.data-table th { background: var(--brown-dark); color: var(--cream); padding: 12px 16px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; text-align: left; }
+.data-table td { padding: 11px 16px; border-bottom: 1px solid var(--cream-dark); font-size: 13px; color: var(--brown-dark); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--cream); }
+
+/* ─── SETTINGS ───────────────────────────────────────── */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.settings-card { background: white; border-radius: var(--radius); padding: 24px; border: 1.5px solid var(--cream-mid); box-shadow: var(--shadow); }
+.settings-card h3 { font-family: 'Playfair Display',serif; font-size: 17px; color: var(--brown-dark); margin-bottom: 18px; }
+.avatar-upload { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.avatar-big {
+  width: 64px; height: 64px; border-radius: 14px;
+  background: var(--cream-dark); display: flex; align-items: center; justify-content: center;
+  font-size: 28px; overflow: hidden; cursor: pointer; border: 2px solid var(--cream-mid);
+}
+.avatar-big img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-hint { font-size: 12px; color: var(--brown-warm); margin-top: 4px; }
+.save-btn {
+  padding: 10px 22px; background: var(--brown-dark); color: var(--cream);
+  border: none; border-radius: 8px; font-family: 'DM Sans',sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; margin-top: 8px;
+}
+.save-btn:hover { background: var(--brown-mid); }
+.staff-list { margin-top: 14px; }
+.staff-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 0;
+  border-bottom: 1px solid var(--cream-dark);
+}
+.staff-row:last-child { border-bottom: none; }
+.staff-av { width: 36px; height: 36px; border-radius: 9px; background: var(--brown-light); display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; flex-shrink: 0; overflow: hidden; }
+.staff-av img { width: 100%; height: 100%; object-fit: cover; }
+.staff-info { flex: 1; }
+.staff-info .sname { font-size: 14px; font-weight: 600; color: var(--brown-dark); }
+.staff-info .srole { font-size: 11px; color: var(--brown-warm); }
+.staff-del { background: none; border: none; color: #ccc; font-size: 17px; cursor: pointer; transition: color .15s; }
+.staff-del:hover { color: var(--red); }
+
+/* ─── NOTIFICATIONS PANEL ────────────────────────────── */
+.notif-panel {
+  position: fixed; top: calc(var(--nav-h) + 8px); right: 12px; z-index: 200;
+  background: white; border-radius: var(--radius); width: 300px;
+  box-shadow: var(--shadow-lg); border: 1.5px solid var(--cream-mid);
+  display: none; overflow: hidden;
+}
+.notif-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--cream-dark); }
+.notif-panel-header h4 { font-family: 'Playfair Display',serif; font-size: 15px; color: var(--brown-dark); }
+.mark-read-btn { font-size: 11px; color: var(--brown-warm); cursor: pointer; background: none; border: none; font-family: 'DM Sans',sans-serif; }
+.notif-list { max-height: 320px; overflow-y: auto; }
+.notif-item { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--cream-dark); background: transparent; transition: background .15s; }
+.notif-item.unread { background: #FFF8F0; }
+.notif-item:last-child { border-bottom: none; }
+.notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+.notif-dot.read { background: transparent; }
+.notif-text { font-size: 13px; color: var(--brown-dark); }
+.notif-time { font-size: 11px; color: var(--brown-warm); margin-top: 2px; }
+
+/* ─── ENHANCED STAT CARDS ────────────────────────────── */
+.stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+  background: white; border-radius: var(--radius); padding: 22px 20px;
+  box-shadow: var(--shadow); border: 1px solid var(--cream-mid);
+  position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 4px;
+}
+.stat-card::after {
+  content: ''; position: absolute; right: -18px; top: -18px;
+  width: 80px; height: 80px; border-radius: 50%; opacity: .07;
+}
+.stat-card--orders::after { background: var(--brown-dark); }
+.stat-card--revenue::after { background: var(--accent); }
+.stat-card--items::after { background: var(--green); }
+.stat-card--stock::after { background: var(--red); }
+.stat-card-icon-wrap {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--cream-dark); display: flex; align-items: center; justify-content: center;
+  margin-bottom: 8px;
+}
+.stat-card-icon { font-size: 20px; }
+.stat-card .stat-val { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--brown-dark); line-height: 1; }
+.stat-card .stat-label { font-size: 12px; color: var(--brown-warm); font-weight: 500; }
+.stat-trend { font-size: 11px; color: var(--green); font-weight: 600; margin-top: 2px; }
+.stat-trend.down { color: var(--red); }
+
+/* ─── DASHBOARD CHARTS ───────────────────────────────── */
+.dash-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.dash-chart-card {
+  background: white; border-radius: var(--radius); padding: 22px;
+  border: 1.5px solid var(--cream-mid); box-shadow: var(--shadow);
+}
+.dash-chart-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+.dash-chart-header h3 { font-family: 'Playfair Display',serif; font-size: 16px; color: var(--brown-dark); }
+.dash-chart-sub { font-size: 12px; color: var(--brown-warm); }
+.top-item-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--cream-dark);
+}
+.top-item-row:last-child { border-bottom: none; }
+.top-item-rank { width: 22px; height: 22px; border-radius: 6px; background: var(--cream-dark); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--brown-warm); flex-shrink: 0; }
+.top-item-name { flex: 1; font-size: 13px; color: var(--brown-dark); font-weight: 500; }
+.top-item-bar-wrap { width: 80px; height: 6px; background: var(--cream-dark); border-radius: 3px; overflow: hidden; }
+.top-item-bar { height: 100%; background: var(--brown-light); border-radius: 3px; transition: width .6s ease; }
+.top-item-val { font-size: 12px; font-weight: 700; color: var(--brown-mid); min-width: 38px; text-align: right; }
+
+/* ─── INVENTORY ──────────────────────────────────────── */
+.ing-grid { display: flex; flex-direction: column; gap: 12px; }
+.ing-card {
+  background: white; border-radius: var(--radius); padding: 18px;
+  border: 1.5px solid var(--cream-mid); box-shadow: var(--shadow); position: relative;
+  display: flex; align-items: center; gap: 16px;
+}
+.ing-thumb {
+  width: 44px; height: 44px; border-radius: 10px; background: var(--cream-dark);
+  display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;
+}
+.ing-info { flex: 1; min-width: 0; }
+.ing-name { font-size: 16px; font-weight: 600; color: var(--brown-dark); margin-bottom: 4px; }
+.ing-details { font-size: 13px; color: var(--brown-warm); }
+.ing-stock-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ing-stock-bar-wrap { flex: 1; height: 7px; background: var(--cream-dark); border-radius: 4px; overflow: hidden; }
+.ing-stock-bar { height: 100%; border-radius: 4px; transition: width .5s ease, background .3s; }
+.ing-stock-bar.ok { background: var(--green); }
+.ing-stock-bar.warn { background: var(--accent); }
+.ing-stock-bar.critical { background: var(--red); }
+.ing-stock-label { font-size: 12px; font-weight: 700; color: var(--brown-mid); min-width: 44px; text-align: right; }
+.ing-actions { display: flex; gap: 6px; align-items: center; }
+.ing-qty-input {
+  width: 70px; padding: 5px 8px; border-radius: 7px; border: 1.5px solid var(--cream-mid);
+  font-family: 'DM Sans',sans-serif; font-size: 13px; color: var(--brown-dark); outline: none;
+}
+.ing-qty-input:focus { border-color: var(--brown-light); }
+.ing-restock-btn {
+  padding: 5px 12px; background: var(--brown-dark); color: var(--cream);
+  border: none; border-radius: 7px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans',sans-serif; transition: background .2s;
+}
+.ing-restock-btn:hover { background: var(--brown-mid); }
+.ing-del-btn { background: none; border: none; color: #ccc; font-size: 17px; cursor: pointer; transition: color .15s; margin-left: auto; }
+.ing-del-btn:hover { color: var(--red); }
+.ing-linked-items { font-size: 11px; color: var(--brown-warm); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--cream-dark); }
+.ing-link-chip {
+  display: inline-block; background: var(--cream-dark); border-radius: 6px;
+  padding: 2px 7px; font-size: 11px; color: var(--brown-mid); margin: 2px 2px 0 0;
+}
+.ing-link-btn {
+  background: none; border: 1.5px solid var(--cream-mid); color: var(--brown-warm);
+  font-size: 14px; padding: 3px 7px; border-radius: 7px; cursor: pointer;
+  transition: all .2s;
+}
+.ing-link-btn:hover { background: var(--cream-dark); border-color: var(--brown-light); }
+
+/* Link Ingredients Modal list */
+.link-ing-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--cream-dark);
+}
+.link-ing-row:last-child { border-bottom: none; }
+.link-ing-name { flex: 1; font-size: 13px; color: var(--brown-dark); }
+.link-ing-qty {
+  width: 72px; padding: 5px 8px; border-radius: 7px; border: 1.5px solid var(--cream-mid);
+  font-family: 'DM Sans',sans-serif; font-size: 13px; color: var(--brown-dark); outline: none;
+}
+.link-ing-qty:focus { border-color: var(--brown-light); }
+.link-ing-unit { font-size: 12px; color: var(--brown-warm); min-width: 28px; }
+
+
+#toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--brown-dark); color: var(--cream); padding: 12px 18px;
+  border-radius: 10px; font-size: 13px; font-weight: 500;
+  box-shadow: 0 6px 24px rgba(0,0,0,.25); max-width: 300px;
+  display: flex; align-items: center; gap: 8px;
+  transform: translateX(120%); opacity: 0;
+}
+.toast .toast-icon { font-size: 17px; }
+
+/* ─── MODAL ──────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 500;
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: white; border-radius: var(--radius); padding: 28px;
+  width: 400px; box-shadow: var(--shadow-lg);
+  transform: scale(.9); opacity: 0;
+}
+.modal-box h3 { font-family: 'Playfair Display',serif; font-size: 20px; margin-bottom: 18px; color: var(--brown-dark); }
+.modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--brown-warm); }
+
+/* ─── MISC ───────────────────────────────────────────── */
+.badge { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.badge-cash { background: #D1E7DD; color: #0A5C2A; }
+.badge-gcash { background: #CCE5FF; color: #004085; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--brown-warm); font-size: 14px; }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.divider { height: 1px; background: var(--cream-mid); margin: 20px 0; }
+input[type="file"] { display: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--cream-mid); border-radius: 10px; }
+
+/* ─── SYSTEM SETTINGS SECTION ───────────────────────── */
+.sys-settings-card { background: white; border-radius: var(--radius); padding: 24px; border: 1.5px solid var(--cream-mid); box-shadow: var(--shadow); margin-bottom: 20px; }
+.sys-settings-card h3 { font-family: 'Playfair Display',serif; font-size: 17px; color: var(--brown-dark); margin-bottom: 18px; }
+
+.loading-overlay {
+  position: fixed; inset: 0; background: rgba(253,246,238,0.9); z-index: 2000;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+  font-family: 'Playfair Display',serif; font-size: 18px; color: var(--brown-dark);
+}
+.spinner {
+  width: 40px; height: 40px; border: 3px solid var(--cream-mid);
+  border-top-color: var(--brown-mid); border-radius: 50%; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner" style="border-radius:50%"></div>
+  <span>Loading PearlHouse...</span>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-bubbles" id="loginBubbles"></div>
+  <div class="login-card" id="loginCard">
+    <div class="login-logo">
+      <span class="emoji" id="loginLogoIcon">🧋</span>
+      <h1 id="loginTitle">PearlHouse</h1>
+      <p>Milk Tea Point of Sale</p>
+    </div>
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="setRole('admin')">👑 Admin</button>
+      <button class="role-tab" onclick="setRole('staff')">🧑‍💼 Staff</button>
+    </div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" value="admin">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" value="admin123">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-error" id="loginError">Invalid username or password</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOP NAV -->
+  <nav class="topnav">
+    <div class="nav-brand">
+      <span class="logo-icon" id="navLogo">🧋</span>
+      <div class="nav-brand-text">
+        <h2 id="sysNameNav">PearlHouse</h2>
+        <p>POS System</p>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="notif-btn" onclick="toggleNotifPanel()" id="notifBtn">
+        🔔
+        <span class="notif-badge" id="notifBadge"></span>
+      </button>
+      <div class="user-chip">
+        <div class="user-avatar" id="navAvatar">👤</div>
+        <span class="user-name" id="navUserName">User</span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Operations</div>
+      <button class="nav-item active" data-page="neworder" onclick="navTo('neworder')">
+        <span class="icon">🛒</span> New Order
+      </button>
+      <button class="nav-item" data-page="queue" onclick="navTo('queue')">
+        <span class="icon">📋</span> Order Queue
+      </button>
+      <button class="nav-item" id="staffSettingsNav" data-page="settings" onclick="navTo('settings')">
+        <span class="icon">⚙️</span> Settings
+      </button>
+    </div>
+    <div class="sidebar-section" id="adminSection">
+      <div class="sidebar-label">Management</div>
+      <button class="nav-item" data-page="dashboard" onclick="navTo('dashboard')">
+        <span class="icon">📊</span> Dashboard
+      </button>
+      <button class="nav-item" data-page="menu" onclick="navTo('menu')">
+        <span class="icon">🍵</span> Menu
+      </button>
+      <button class="nav-item" data-page="inventory" onclick="navTo('inventory')">
+        <span class="icon">🫙</span> Inventory
+      </button>
+      <button class="nav-item" data-page="reports" onclick="navTo('reports')">
+        <span class="icon">📈</span> Reports
+      </button>
+      <button class="nav-item" data-page="transactions" onclick="navTo('transactions')">
+        <span class="icon">💳</span> Transactions
+      </button>
+      <button class="nav-item" data-page="userlogs" onclick="navTo('userlogs')">
+        <span class="icon">🔐</span> User Logs
+      </button>
+      <button class="nav-item" data-page="settings" onclick="navTo('settings')">
+        <span class="icon">⚙️</span> Settings
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- NEW ORDER PAGE -->
+    <div class="page active" id="page-neworder" style="height:calc(100vh - var(--nav-h));overflow:hidden;padding:20px;">
+      <div class="pos-layout" style="height:100%">
+        <div class="pos-menu">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="menuSearch" placeholder="Search drinks..." oninput="renderMenu()">
+          </div>
+          <div class="cat-tabs" id="catTabs">
+            <button class="cat-tab active" onclick="setCategory('All')">All</button>
+            <button class="cat-tab" onclick="setCategory('Milk Tea')">🧋 Milk Tea</button>
+            <button class="cat-tab" onclick="setCategory('Fruit Tea')">🍵 Fruit Tea</button>
+            <button class="cat-tab" onclick="setCategory('Slush')">🧊 Slush</button>
+          </div>
+          <div class="menu-grid" id="menuGrid"></div>
+        </div>
+        <div class="cart-panel">
+          <div class="cart-header">
+            <h3>Current Order</h3>
+            <span id="cartOrderNum">#—</span>
+          </div>
+          <div class="cart-items" id="cartItems">
+            <div class="cart-empty"><div class="empty-icon">🧋</div>Add items to start an order</div>
+          </div>
+          <div class="cart-footer">
+            <div class="cart-total-row">
+              <span class="cart-total-label">Total</span>
+              <span class="cart-total-val" id="cartTotal">₱0.00</span>
+            </div>
+            <div id="paySection" style="display:none">
+              <div class="pay-tabs">
+                <button class="pay-tab active" onclick="setPayMethod('cash')">💵 Cash</button>
+                <button class="pay-tab" onclick="setPayMethod('gcash')">📱 GCash</button>
+              </div>
+              <div class="pay-panel active" id="cashPanel">
+                <div class="cash-input-wrap">
+                  <span class="cash-prefix">₱</span>
+                  <input type="number" class="cash-input" id="cashGiven" placeholder="0.00" oninput="calcChange()">
+                </div>
+                <div class="change-row">
+                  <span>Change:</span>
+                  <span class="change-val" id="changeVal">₱0.00</span>
+                </div>
+              </div>
+              <div class="pay-panel" id="gcashPanel">
+                <div class="gcash-box">
+                  <div class="gcash-qr" id="gcashQrDisplay" onclick="openGcashModal()">📷</div>
+                  <div class="gcash-num" id="gcashNumDisplay">Tap to edit QR code</div>
+                </div>
+              </div>
+              <button class="place-btn" onclick="placeOrder()" id="placeBtn">Place Order</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDER QUEUE PAGE -->
+    <div class="page" id="page-queue">
+      <div class="page-header">
+        <h1>Order Queue</h1>
+        <p>Track and manage active orders</p>
+      </div>
+      <div id="queueTableWrap"></div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Overview of today's performance</p>
+        </div>
+        <div class="filter-row" style="margin-bottom:0">
+          <button class="filter-btn active" onclick="setDashFilter('today')">Today</button>
+          <button class="filter-btn" onclick="setDashFilter('week')">This Week</button>
+          <button class="filter-btn" onclick="setDashFilter('month')">This Month</button>
+        </div>
+      </div>
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card stat-card--orders">
+          <div class="stat-card-icon-wrap"><span class="stat-card-icon">📦</span></div>
+          <div class="stat-val" id="statOrders">0</div>
+          <div class="stat-label">Total Orders</div>
+          <div class="stat-trend" id="trendOrders"></div>
+        </div>
+        <div class="stat-card stat-card--revenue">
+          <div class="stat-card-icon-wrap"><span class="stat-card-icon">💰</span></div>
+          <div class="stat-val" id="statRevenue">₱0</div>
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-trend" id="trendRevenue"></div>
+        </div>
+        <div class="stat-card stat-card--items">
+          <div class="stat-card-icon-wrap"><span class="stat-card-icon">🍵</span></div>
+          <div class="stat-val" id="statItems">0</div>
+          <div class="stat-label">Menu Items</div>
+          <div class="stat-trend" id="trendItems"></div>
+        </div>
+        <div class="stat-card stat-card--stock">
+          <div class="stat-card-icon-wrap"><span class="stat-card-icon">🫙</span></div>
+          <div class="stat-val" id="statLowStock">0</div>
+          <div class="stat-label">Low Stock Alerts</div>
+          <div class="stat-trend" id="trendLowStock"></div>
+        </div>
+      </div>
+      <div class="dash-charts-grid">
+        <div class="dash-chart-card" style="grid-column:1/3">
+          <div class="dash-chart-header">
+            <h3>Revenue Over Time</h3>
+            <span class="dash-chart-sub" id="revenueChartSub"></span>
+          </div>
+          <canvas id="dashRevenueCanvas" height="180"></canvas>
+        </div>
+        <div class="dash-chart-card">
+          <div class="dash-chart-header">
+            <h3>Sales by Category</h3>
+          </div>
+          <canvas id="dashCategoryCanvas" height="180"></canvas>
+          <div class="legend-list" id="dashCatLegend" style="margin-top:10px"></div>
+        </div>
+        <div class="dash-chart-card">
+          <div class="dash-chart-header">
+            <h3>Top Selling Items</h3>
+          </div>
+          <div id="dashTopItems" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENU MANAGEMENT PAGE -->
+    <div class="page" id="page-menu">
+      <div class="page-header">
+        <h1>Menu Management</h1>
+        <p>Add, edit, or remove menu items</p>
+      </div>
+      <div class="add-item-form">
+        <h3>Add New Item</h3>
+        <div class="form-row">
+          <div class="form-field"><label>Name</label><input type="text" id="newName" placeholder="e.g. Taro Milk Tea"></div>
+          <div class="form-field"><label>Price (₱)</label><input type="number" id="newPrice" placeholder="0.00"></div>
+          <div class="form-field"><label>Category</label>
+            <select id="newCat">
+              <option value="Milk Tea">Milk Tea</option>
+              <option value="Fruit Tea">Fruit Tea</option>
+              <option value="Slush">Slush</option>
+            </select>
+          </div>
+          <div class="form-field"><label>Emoji</label><input type="text" id="newEmoji" placeholder="🧋" maxlength="4"></div>
+          <div class="form-field"><label>Stock</label><input type="number" id="newStock" placeholder="50"></div>
+        </div>
+        <button class="add-btn" onclick="addMenuItem()">+ Add Item</button>
+      </div>
+      <div class="menu-mgmt-grid" id="menuMgmtGrid"></div>
+    </div>
+
+    <!-- INVENTORY PAGE -->
+    <div class="page" id="page-inventory">
+      <div class="page-header">
+        <h1>Inventory</h1>
+        <p>Manage ingredients and track stock levels</p>
+      </div>
+      <!-- Add Ingredient Form -->
+      <div class="add-item-form">
+        <h3>Add New Ingredient</h3>
+        <div class="form-row">
+          <div class="form-field"><label>Ingredient Name</label><input type="text" id="ingName" placeholder="e.g. Tapioca Pearls"></div>
+          <div class="form-field"><label>Unit</label>
+            <select id="ingUnit">
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="L">L</option>
+              <option value="mL">mL</option>
+              <option value="pcs">pcs</option>
+              <option value="bags">bags</option>
+              <option value="bottles">bottles</option>
+            </select>
+          </div>
+          <div class="form-field"><label>Current Stock</label><input type="number" id="ingStock" placeholder="100"></div>
+          <div class="form-field"><label>Low Stock Threshold</label><input type="number" id="ingThreshold" placeholder="20"></div>
+          <div class="form-field"><label>Emoji</label><input type="text" id="ingEmoji" placeholder="🧉" maxlength="4"></div>
+        </div>
+        <button class="add-btn" onclick="addIngredient()">+ Add Ingredient</button>
+      </div>
+      <!-- Ingredients Grid -->
+      <div class="ing-grid" id="ingGrid"></div>
+
+      <!-- Link Ingredients Modal -->
+      <div class="modal-overlay" id="linkIngModal">
+        <div class="modal-box" style="position:relative;width:480px;max-width:95vw">
+          <button class="modal-close" onclick="closeModal('linkIngModal')">✕</button>
+          <h3 id="linkIngModalTitle">Link Ingredients</h3>
+          <p style="font-size:13px;color:var(--brown-warm);margin-bottom:16px">Set how much of each ingredient is used per serving of this item.</p>
+          <div id="linkIngList"></div>
+          <button class="save-btn" style="margin-top:16px;width:100%" onclick="saveLinkIngredients()">Save Links</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS PAGE -->
+    <div class="page" id="page-reports">
+      <div class="page-header">
+        <h1>Sales Reports</h1>
+        <p>Revenue breakdown by category</p>
+      </div>
+      <div class="reports-grid">
+        <div class="report-card" style="grid-column:1/-1">
+          <h3>Revenue by Category</h3>
+          <div class="filter-row">
+            <button class="filter-btn active" onclick="setReportFilter('today')">Today</button>
+            <button class="filter-btn" onclick="setReportFilter('week')">This Week</button>
+            <button class="filter-btn" onclick="setReportFilter('month')">This Month</button>
+          </div>
+          <canvas id="reportCanvas" height="260"></canvas>
+          <div class="legend-list" id="reportLegend"></div>
+          <div class="divider"></div>
+          <div id="reportSummary" style="font-size:13px;color:var(--brown-warm)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS PAGE -->
+    <div class="page" id="page-transactions">
+      <div class="page-header">
+        <h1>Transactions</h1>
+        <p>Complete log of all orders</p>
+      </div>
+      <div id="transTableWrap"></div>
+    </div>
+
+    <!-- USER LOGS PAGE -->
+    <div class="page" id="page-userlogs">
+      <div class="page-header">
+        <h1>User Logs</h1>
+        <p>Login activity history</p>
+      </div>
+      <div id="userLogsTableWrap"></div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <h1>Settings</h1>
+        <p>Profile, staff, and system configuration</p>
+      </div>
+
+      <!-- System Branding -->
+      <div class="sys-settings-card" id="adminBrandingSection">
+        <h3>System Branding</h3>
+        <div class="form-row">
+          <div class="form-field">
+            <label>System Name</label>
+            <input type="text" id="sysNameInput" value="PearlHouse">
+          </div>
+          <div class="form-field">
+            <label>Logo (emoji or image)</label>
+            <input type="text" id="sysLogoEmoji" placeholder="🧋">
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:11px;font-weight:600;color:var(--brown-warm);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:5px">Or Upload Logo Image</label>
+          <input type="file" id="sysLogoFile" accept="image/*" onchange="uploadSysLogo(event)">
+          <button class="add-btn" onclick="document.getElementById('sysLogoFile').click()" style="padding:8px 14px;font-size:13px">📁 Choose Image</button>
+        </div>
+        <button class="save-btn" onclick="saveBranding()">Save Branding</button>
+      </div>
+
+      <div class="settings-grid">
+        <!-- Profile -->
+        <div class="settings-card">
+          <h3>My Profile</h3>
+          <div class="avatar-upload">
+            <div class="avatar-big" id="profileAvatarDisplay" onclick="document.getElementById('profileAvatarInput').click()">👤</div>
+            <input type="file" id="profileAvatarInput" accept="image/*" onchange="uploadProfilePhoto(event)">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--brown-dark)" id="profileDisplayNameShow">User</div>
+              <div class="avatar-hint">Click avatar to change photo</div>
+            </div>
+          </div>
+          <div class="form-field" style="margin-bottom:10px"><label>Display Name</label><input type="text" id="profileDisplayName"></div>
+          <div class="form-field" style="margin-bottom:10px"><label>Username</label><input type="text" id="profileUsername"></div>
+          <div class="form-field" style="margin-bottom:10px"><label>New Password</label><input type="password" id="profilePassword" placeholder="Leave blank to keep current"></div>
+          <button class="save-btn" onclick="saveProfile()">Save Profile</button>
+        </div>
+
+        <!-- Staff Management -->
+        <div class="settings-card" id="staffMgmtCard">
+          <h3>Staff Management</h3>
+          <div class="form-field" style="margin-bottom:8px"><label>Display Name</label><input type="text" id="newStaffDisplay" placeholder="e.g. Maria Santos"></div>
+          <div class="form-field" style="margin-bottom:8px"><label>Username</label><input type="text" id="newStaffUser" placeholder="e.g. maria"></div>
+          <div class="form-field" style="margin-bottom:12px"><label>Password</label><input type="password" id="newStaffPass" placeholder="Password"></div>
+          <button class="add-btn" onclick="addStaff()" style="margin-bottom:16px">+ Add Staff</button>
+          <div class="staff-list" id="staffList"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- NOTIFICATIONS PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-panel-header">
+    <h4>Notifications</h4>
+    <button class="mark-read-btn" onclick="markAllRead()">Mark all read</button>
+  </div>
+  <div class="notif-list" id="notifList"></div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- STAFF PROFILE MODAL -->
+<div class="modal-overlay" id="staffModal">
+  <div class="modal-box" id="staffModalBox" style="position:relative">
+    <button class="modal-close" onclick="closeModal('staffModal')">✕</button>
+    <h3 id="staffModalName">Staff Profile</h3>
+    <div id="staffModalContent"></div>
+  </div>
+</div>
+
+<!-- EDIT MENU MODAL -->
+<div class="modal-overlay" id="editMenuModal">
+  <div class="modal-box" style="position:relative;width:480px;max-width:95vw">
+    <button class="modal-close" onclick="closeModal('editMenuModal')">✕</button>
+    <h3>Edit Product</h3>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;gap:16px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div class="avatar-big" id="editMenuImage" onclick="document.getElementById('editMenuImageInput').click()" style="cursor:pointer">🧋</div>
+          <input type="file" id="editMenuImageInput" accept="image/*" onchange="uploadEditMenuImg(event)" style="display:none">
+          <button type="button" class="add-btn" style="padding:6px 14px;font-size:13px;width:110px" onclick="document.getElementById('editMenuImageInput').click()">Edit Photo</button>
+        </div>
+        <div style="flex:1">
+          <div class="form-field" style="margin-bottom:12px">
+            <label>Product Name</label>
+            <input type="text" id="editMenuName" placeholder="e.g. Taro Milk Tea">
+          </div>
+          <div class="form-field">
+            <label>Emoji</label>
+            <input type="text" id="editMenuEmoji" placeholder="🧋" maxlength="4">
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Price (₱)</label>
+          <input type="number" id="editMenuPrice" placeholder="0.00" step="0.01">
+        </div>
+        <div class="form-field">
+          <label>Category</label>
+          <select id="editMenuCategory">
+            <option value="Milk Tea">Milk Tea</option>
+            <option value="Fruit Tea">Fruit Tea</option>
+            <option value="Slush">Slush</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Stock</label>
+          <input type="number" id="editMenuStock" placeholder="50">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <label class="toggle-switch" style="margin:0">
+          <input type="checkbox" id="editMenuAvailable">
+          <span class="toggle-slider"></span>
+        </label>
+        <span style="font-size:13px;color:var(--brown-warm)">Available</span>
+      </div>
+      <button class="save-btn" style="width:100%" onclick="saveEditMenu()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- GCASH QR MODAL -->
+<div class="modal-overlay" id="gcashModal">
+  <div class="modal-box" style="position:relative;width:480px;max-width:95vw">
+    <button class="modal-close" onclick="closeModal('gcashModal')">✕</button>
+    <h3>GCash QR Code</h3>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="text-align:center">
+        <div class="avatar-big" id="gcashModalQr" onclick="document.getElementById('gcashModalInput').click()" style="cursor:pointer;margin:0 auto">📷</div>
+        <input type="file" id="gcashModalInput" accept="image/*" onchange="uploadGcashModalQr(event)" style="display:none">
+        <div style="font-size:12px;color:var(--brown-warm);margin-top:8px">Click to upload or change QR code</div>
+      </div>
+      <div class="form-field">
+        <label>GCash Number (Optional)</label>
+        <input type="text" id="gcashNumber" placeholder="e.g. 09123456789">
+      </div>
+      <div class="form-field">
+        <label>Account Name (Optional)</label>
+        <input type="text" id="gcashName" placeholder="e.g. PearlHouse POS">
+      </div>
+      <button class="save-btn" style="width:100%" onclick="saveGcashSettings()">Save QR Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────────────────────────────
+// CONFIG — Point this to your backend. Change BASE_URL when deployed.
+// ──────────────────────────────────────────────────────────────────────────────
+const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000'
+  : '';  // same-origin when deployed
+
+// ──────────────────────────────────────────────────────────────────────────────
+// FALLBACK: If no backend, use in-memory demo data
+// ──────────────────────────────────────────────────────────────────────────────
+let OFFLINE_MODE = false;
+let MENU = [];
+let ACCOUNTS = [];
+let cart = [];
+let orders = [];
+let transactionLogs = [];
+let userLogs = [];
+let notifications = [];
+let orderNum = 1001;
+let currentUser = null;
+let currentRole = 'admin';
+let selectedCategory = 'All';
+let payMethod = 'cash';
+let reportFilter = 'today';
+let gcashQrData = null;
+let stockAlertState = {};
+let sysLogoData = null;
+let reportChartInstance = null;
+
+const DEMO_MENU = [
+  {id:1,name:"Classic Pearl Milk Tea",price:85,emoji:"🧋",category:"Milk Tea",available:true,stock:50,image:null},
+  {id:2,name:"Taro Milk Tea",price:95,emoji:"💜",category:"Milk Tea",available:true,stock:45,image:null},
+  {id:3,name:"Brown Sugar Boba",price:100,emoji:"🤎",category:"Milk Tea",available:true,stock:40,image:null},
+  {id:4,name:"Matcha Latte",price:110,emoji:"🍵",category:"Milk Tea",available:true,stock:35,image:null},
+  {id:5,name:"Mango Fruit Tea",price:85,emoji:"🥭",category:"Fruit Tea",available:true,stock:50,image:null},
+  {id:6,name:"Strawberry Tea",price:90,emoji:"🍓",category:"Fruit Tea",available:true,stock:48,image:null},
+  {id:7,name:"Lychee Tea",price:88,emoji:"🍈",category:"Fruit Tea",available:true,stock:42,image:null},
+  {id:8,name:"Passion Fruit Tea",price:92,emoji:"🍊",category:"Fruit Tea",available:true,stock:38,image:null},
+  {id:9,name:"Mango Slush",price:95,emoji:"🧊",category:"Slush",available:true,stock:30,image:null},
+  {id:10,name:"Strawberry Slush",price:95,emoji:"🌸",category:"Slush",available:true,stock:30,image:null},
+];
+const DEMO_ACCOUNTS = [
+  {id:1,username:"admin",password:"admin123",display_name:"Admin",role:"admin",image:null},
+  {id:2,username:"staff",password:"staff123",display_name:"Staff User",role:"staff",image:null},
+];
+
+// INGREDIENTS
+let INGREDIENTS = [
+  {id:101,name:"Tapioca Pearls",emoji:"⚫",unit:"kg",stock:5,threshold:1},
+  {id:102,name:"Fresh Milk",emoji:"🥛",unit:"L",stock:12,threshold:3},
+  {id:103,name:"Black Tea",emoji:"🍃",unit:"kg",stock:2,threshold:0.5},
+  {id:104,name:"Taro Powder",emoji:"💜",unit:"kg",stock:3,threshold:0.5},
+  {id:105,name:"Brown Sugar Syrup",emoji:"🍯",unit:"bottles",stock:8,threshold:2},
+  {id:106,name:"Matcha Powder",emoji:"🍵",unit:"kg",stock:1.5,threshold:0.3},
+  {id:107,name:"Mango Puree",emoji:"🥭",unit:"kg",stock:4,threshold:1},
+  {id:108,name:"Strawberry Puree",emoji:"🍓",unit:"kg",stock:3,threshold:1},
+  {id:109,name:"Lychee Syrup",emoji:"🍈",unit:"bottles",stock:5,threshold:2},
+  {id:110,name:"Passion Fruit Syrup",emoji:"🍊",unit:"bottles",stock:4,threshold:2},
+  {id:111,name:"Sugar Syrup",emoji:"🍬",unit:"L",stock:6,threshold:1},
+  {id:112,name:"Cups & Lids",emoji:"🥤",unit:"pcs",stock:500,threshold:100},
+];
+
+// item→ingredient links: {menuItemId: [{ingId, qty}]}
+let ITEM_INGREDIENTS = {
+  1: [{ingId:101,qty:0.05},{ingId:102,qty:0.3},{ingId:103,qty:0.01},{ingId:111,qty:0.02},{ingId:112,qty:1}],
+  2: [{ingId:101,qty:0.05},{ingId:102,qty:0.3},{ingId:104,qty:0.02},{ingId:111,qty:0.02},{ingId:112,qty:1}],
+  3: [{ingId:101,qty:0.05},{ingId:102,qty:0.3},{ingId:105,qty:0.05},{ingId:112,qty:1}],
+  4: [{ingId:102,qty:0.3},{ingId:106,qty:0.015},{ingId:111,qty:0.02},{ingId:112,qty:1}],
+  5: [{ingId:107,qty:0.1},{ingId:103,qty:0.01},{ingId:111,qty:0.02},{ingId:112,qty:1}],
+  6: [{ingId:108,qty:0.1},{ingId:103,qty:0.01},{ingId:111,qty:0.02},{ingId:112,qty:1}],
+  7: [{ingId:109,qty:0.05},{ingId:103,qty:0.01},{ingId:111,qty:0.02},{ingId:112,qty:1}],
+  8: [{ingId:110,qty:0.05},{ingId:103,qty:0.01},{ingId:111,qty:0.02},{ingId:112,qty:1}],
+  9: [{ingId:107,qty:0.12},{ingId:111,qty:0.02},{ingId:112,qty:1}],
+  10:[{ingId:108,qty:0.12},{ingId:111,qty:0.02},{ingId:112,qty:1}],
+};
+let ingIdCounter = 200;
+let linkingMenuId = null;
+
+// ──────────────────────────────────────────────────────────────────────────────
+// API HELPERS
+// ──────────────────────────────────────────────────────────────────────────────
+async function api(method, path, data=null) {
+  if (OFFLINE_MODE) return apiOffline(method, path, data);
+  try {
+    const opts = {
+      method,
+      headers: {'Content-Type':'application/json'},
+      credentials: 'include'
+    };
+    if (data) opts.body = JSON.stringify(data);
+    const r = await fetch(BASE_URL + path, opts);
+    if (!r.ok) {
+      const e = await r.json().catch(()=>({error:'Request failed'}));
+      throw new Error(e.error || 'Request failed');
+    }
+    return await r.json();
+  } catch(e) {
+    if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+      console.warn('Backend not available, switching to offline mode');
+      OFFLINE_MODE = true;
+      return apiOffline(method, path, data);
+    }
+    throw e;
+  }
+}
+
+// Offline in-memory API fallback
+async function apiOffline(method, path, data) {
+  await new Promise(r => setTimeout(r, 30));
+  if (path === '/api/login' && method === 'POST') {
+    const acc = ACCOUNTS.find(a => a.username===data.username && a.password===data.password);
+    if (!acc) throw new Error('Invalid credentials');
+    return {user: acc};
+  }
+  if (path === '/api/logout' && method === 'POST') return {ok:true};
+  if (path === '/api/menu' && method === 'GET') return {items: MENU};
+  if (path === '/api/menu' && method === 'POST') {
+    const item = {...data, id: Date.now(), available: true, image: null};
+    MENU.push(item); return {item};
+  }
+  if (path.startsWith('/api/menu/') && method === 'PUT') {
+    const id = parseInt(path.split('/').pop());
+    const idx = MENU.findIndex(m=>m.id===id);
+    if (idx>=0) MENU[idx] = {...MENU[idx], ...data};
+    return {item: MENU[idx]};
+  }
+  if (path.startsWith('/api/menu/') && method === 'DELETE') {
+    const id = parseInt(path.split('/').pop());
+    MENU = MENU.filter(m=>m.id!==id); return {ok:true};
+  }
+  if (path === '/api/orders' && method === 'GET') return {orders};
+  if (path === '/api/orders' && method === 'POST') {
+    const order = {
+      id: orderNum, order_num: orderNum,
+      items: data.items, total: data.total,
+      payment: data.payment, staff: currentUser?.username || 'staff',
+      status: 'preparing', created_at: new Date().toISOString()
+    };
+    orderNum++;
+    orders.push(order);
+    transactionLogs.push({...order, type: 'transaction'});
+    // Deduct stock
+    data.items.forEach(ci => {
+      const m = MENU.find(m=>m.id===ci.id);
+      if (m) m.stock = Math.max(0, m.stock - ci.qty);
+    });
+    return {order};
+  }
+  if (path.startsWith('/api/orders/') && method === 'PUT') {
+    const id = parseInt(path.split('/').pop());
+    const o = orders.find(o=>o.id===id);
+    if (o) o.status = data.status;
+    return {order: o};
+  }
+  if (path === '/api/transactions' && method === 'GET') return {transactions: transactionLogs};
+  if (path === '/api/users' && method === 'GET') return {users: ACCOUNTS};
+  if (path === '/api/users' && method === 'POST') {
+    const u = {...data, id: Date.now(), role:'staff', image:null};
+    ACCOUNTS.push(u); return {user:u};
+  }
+  if (path.startsWith('/api/users/') && method === 'DELETE') {
+    const id = parseInt(path.split('/').pop());
+    ACCOUNTS = ACCOUNTS.filter(a=>a.id!==id); return {ok:true};
+  }
+  if (path.startsWith('/api/users/') && method === 'PUT') {
+    const id = parseInt(path.split('/').pop());
+    const idx = ACCOUNTS.findIndex(a=>a.id===id);
+    if (idx>=0) ACCOUNTS[idx] = {...ACCOUNTS[idx], ...data};
+    if (currentUser?.id === id) currentUser = ACCOUNTS[idx];
+    return {user: ACCOUNTS[idx]};
+  }
+  if (path === '/api/logs' && method === 'GET') return {logs: userLogs};
+  if (path === '/api/notifications' && method === 'GET') return {notifications};
+  return {ok:true};
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// GSAP ANIMATIONS
+// ──────────────────────────────────────────────────────────────────────────────
+function animatePageIn(pageId) {
+  const page = document.getElementById('page-' + pageId);
+  const cards = page.querySelectorAll('.stat-card, .menu-card, .mgmt-card, .report-card, .settings-card, .sys-settings-card, .add-item-form, .cart-panel, .pos-menu, table, .ing-card, .dash-chart-card');
+  gsap.fromTo(page, {opacity:0,y:12}, {opacity:1,y:0,duration:.28,ease:'power2.out'});
+  if (cards.length > 0) {
+    gsap.fromTo(cards, {opacity:0,y:18,scale:.97}, {opacity:1,y:0,scale:1,duration:.35,stagger:.04,ease:'power2.out',delay:.05});
+  }
+}
+
+function animateMenuCards() {
+  const cards = document.querySelectorAll('#menuGrid .menu-card');
+  gsap.fromTo(cards, {opacity:0,scale:.9,y:10}, {opacity:1,scale:1,y:0,duration:.3,stagger:.03,ease:'back.out(1.2)'});
+}
+
+function animateToast(el) {
+  gsap.to(el, {x:0,opacity:1,duration:.35,ease:'back.out(1.4)'});
+  setTimeout(() => gsap.to(el, {x:120,opacity:0,duration:.3,ease:'power2.in', onComplete:()=>el.remove()}), 2800);
+}
+
+function animateLoginCard() {
+  // Create floating bubbles
+  const container = document.getElementById('loginBubbles');
+  for (let i=0;i<12;i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 40 + Math.random()*200;
+    b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%`;
+    container.appendChild(b);
+    gsap.to(b, {y: -30-Math.random()*60, x: Math.random()*40-20, duration: 3+Math.random()*4, repeat:-1, yoyo:true, ease:'sine.inOut', delay:Math.random()*3});
+  }
+  gsap.to('#loginCard', {opacity:1,y:0,duration:.7,ease:'power3.out',delay:.2});
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// AUTH
+// ──────────────────────────────────────────────────────────────────────────────
+function setRole(role) {
+  currentRole = role;
+  document.querySelectorAll('.role-tab').forEach((t,i)=>{
+    t.classList.toggle('active', (i===0 && role==='admin') || (i===1 && role==='staff'));
+  });
+  if (role==='admin') { document.getElementById('loginUser').value='admin'; document.getElementById('loginPass').value='admin123'; }
+  else { document.getElementById('loginUser').value='staff'; document.getElementById('loginPass').value='staff123'; }
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  try {
+    const res = await api('POST', '/api/login', {username, password});
+    currentUser = res.user;
+    // Log login
+    const logEntry = {id:Date.now(), username, role:currentUser.role, timestamp:new Date().toISOString()};
+    userLogs.unshift(logEntry);
+    addNotification(`${username} logged in as ${currentUser.role}`);
+    showApp();
+  } catch(e) {
+    errEl.textContent = e.message || 'Invalid credentials';
+    errEl.style.display = 'block';
+    gsap.fromTo('#loginCard', {x:-6},{x:0,duration:.4,ease:'elastic.out(1,0.3)',keyframes:[{x:-6},{x:6},{x:-4},{x:4},{x:0}]});
+  }
+}
+
+async function doLogout() {
+  await api('POST', '/api/logout').catch(()=>{});
+  cart = [];
+  gsap.to('#app', {opacity:0,duration:.3,onComplete:()=>{
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    gsap.fromTo('#loginCard', {opacity:0,y:30},{opacity:1,y:0,duration:.5,ease:'power3.out'});
+  }});
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'block';
+  gsap.fromTo(app, {opacity:0},{opacity:1,duration:.4});
+
+  // Role-based UI
+  const isAdmin = currentUser.role === 'admin';
+  document.getElementById('adminSection').style.display = isAdmin ? '' : 'none';
+  document.getElementById('staffMgmtCard').style.display = isAdmin ? '' : 'none';
+  document.getElementById('adminBrandingSection').style.display = isAdmin ? '' : 'none';
+  // Staff gets a Settings nav in the Operations section; hide it for admin (admin has it in Management)
+  document.getElementById('staffSettingsNav').style.display = isAdmin ? 'none' : '';
+
+  // Populate nav user
+  document.getElementById('navUserName').textContent = currentUser.display_name || currentUser.username;
+  updateNavAvatar();
+
+  // Load data
+  loadMenu();
+  renderNotifBadge();
+  updateGcashDisplay();
+  navTo('neworder');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// NAVIGATION
+// ──────────────────────────────────────────────────────────────────────────────
+function navTo(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pageEl = document.getElementById('page-'+page);
+  if (pageEl) { pageEl.classList.add('active'); animatePageIn(page); }
+  const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if (navEl) navEl.classList.add('active');
+
+  // Page-specific renders
+  if (page==='queue') renderQueue();
+  if (page==='dashboard') renderDashboard();
+  if (page==='menu') renderMenuMgmt();
+  if (page==='inventory') renderInventory();
+  if (page==='reports') renderReports();
+  if (page==='transactions') renderTransactions();
+  if (page==='userlogs') renderUserLogs();
+  if (page==='settings') renderSettings();
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// MENU
+// ──────────────────────────────────────────────────────────────────────────────
+async function loadMenu() {
+  try {
+    const res = await api('GET', '/api/menu');
+    MENU = res.items;
+  } catch(e) {
+    MENU = [...DEMO_MENU];
+  }
+  renderMenu();
+  renderMenuMgmt();
+}
+
+function renderMenu() {
+  const q = document.getElementById('menuSearch').value.toLowerCase();
+  const grid = document.getElementById('menuGrid');
+  const filtered = MENU.filter(m => {
+    const matchCat = selectedCategory === 'All' || m.category === selectedCategory;
+    const matchQ = !q || m.name.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div>No items found</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(m => `
+    <button type="button" class="menu-card${m.available ? '' : ' unavailable'}" onclick="addToCart(${m.id})">
+      <div class="card-image-wrapper">
+        ${m.image ? `<img src="${m.image}" alt="${m.name}">` : `<span class="card-image-fallback">${m.emoji}</span>`}
+      </div>
+      <div class="card-copy">
+        <div class="card-name">${m.name}</div>
+        <div class="card-category">${m.category}</div>
+        <div class="card-details">
+          <span class="card-price">₱${parseFloat(m.price).toFixed(2)}</span>
+          <span class="card-stock">${m.available ? `${m.stock} in stock` : 'Unavailable'}</span>
+        </div>
+      </div>
+    </button>
+  `).join('');
+  animateMenuCards();
+}
+
+function setCategory(cat) {
+  selectedCategory = cat;
+  document.querySelectorAll('.cat-tab').forEach(t=>{
+    t.classList.toggle('active', t.textContent.includes(cat) || (cat==='All' && t.textContent==='All'));
+  });
+  renderMenu();
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// CART
+// ──────────────────────────────────────────────────────────────────────────────
+function addToCart(menuId) {
+  const item = MENU.find(m=>m.id===menuId);
+  if (!item || !item.available) return;
+  const existing = cart.find(c=>c.id===menuId);
+  if (existing) {
+    if (existing.qty >= item.stock) { showToast('⚠️ Not enough stock!'); return; }
+    existing.qty++;
+  } else {
+    if (item.stock < 1) { showToast('⚠️ Out of stock!'); return; }
+    cart.push({id:menuId, name:item.name, price:parseFloat(item.price), qty:1, emoji:item.emoji});
+  }
+  renderCart();
+  // Bounce animation on the card
+  const cards = document.querySelectorAll('#menuGrid .menu-card');
+  const idx = [...document.querySelectorAll('#menuGrid .menu-card')].findIndex(c=>c.onclick.toString().includes(menuId));
+  if (idx>=0) gsap.fromTo(cards[idx], {scale:1},{scale:1.06,duration:.12,yoyo:true,repeat:1,ease:'power2.inOut'});
+}
+
+function removeFromCart(id) {
+  cart = cart.filter(c=>c.id!==id);
+  renderCart();
+}
+
+function changeQty(id, delta) {
+  const item = cart.find(c=>c.id===id);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) removeFromCart(id);
+  else renderCart();
+}
+
+function renderCart() {
+  const wrap = document.getElementById('cartItems');
+  const paySection = document.getElementById('paySection');
+  const total = cart.reduce((s,c)=>s+c.price*c.qty, 0);
+  document.getElementById('cartTotal').textContent = '₱'+total.toFixed(2);
+  document.getElementById('cartOrderNum').textContent = '#'+orderNum;
+  if (cart.length === 0) {
+    wrap.innerHTML = '<div class="cart-empty"><div class="empty-icon">🧋</div>Add items to start an order</div>';
+    paySection.style.display = 'none';
+    return;
+  }
+  wrap.innerHTML = cart.map(c=>`
+    <div class="cart-item">
+      <div style="font-size:18px">${c.emoji}</div>
+      <div class="cart-item-name">${c.name}</div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty(${c.id},-1)">−</button>
+        <span class="qty-num">${c.qty}</span>
+        <button class="qty-btn" onclick="changeQty(${c.id},1)">+</button>
+      </div>
+      <div class="cart-item-price">₱${(c.price*c.qty).toFixed(2)}</div>
+      <button class="remove-btn" onclick="removeFromCart(${c.id})">✕</button>
+    </div>
+  `).join('');
+  paySection.style.display = 'block';
+  calcChange();
+}
+
+function setPayMethod(method) {
+  payMethod = method;
+  document.querySelectorAll('.pay-tab').forEach((t,i)=>{
+    t.classList.toggle('active', (i===0&&method==='cash')||(i===1&&method==='gcash'));
+  });
+  document.getElementById('cashPanel').classList.toggle('active', method==='cash');
+  document.getElementById('gcashPanel').classList.toggle('active', method==='gcash');
+}
+
+function calcChange() {
+  const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const given = parseFloat(document.getElementById('cashGiven').value) || 0;
+  const change = given - total;
+  const el = document.getElementById('changeVal');
+  el.textContent = '₱'+Math.abs(change).toFixed(2);
+  el.className = 'change-val' + (change < 0 ? ' negative' : '');
+}
+
+async function placeOrder() {
+  if (cart.length === 0) return;
+  if (payMethod === 'cash') {
+    const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
+    const given = parseFloat(document.getElementById('cashGiven').value)||0;
+    if (given < total) { showToast('💵 Insufficient cash amount'); return; }
+  }
+  const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const btn = document.getElementById('placeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Placing...';
+  try {
+    const res = await api('POST', '/api/orders', {
+      items: cart.map(c=>({id:c.id,name:c.name,price:c.price,qty:c.qty,emoji:c.emoji})),
+      total, payment: payMethod, staff: currentUser?.username
+    });
+    const order = res.order;
+    // NOTE: In offline mode, apiOffline already pushes to orders[] and transactionLogs[].
+    // In online mode, we sync locally so the queue and dashboard work without an extra fetch.
+    if (!OFFLINE_MODE) {
+      orders.push(order);
+      transactionLogs.push(order);
+    }
+    // Deduct stock locally
+    cart.forEach(ci => {
+      const m = MENU.find(m=>m.id===ci.id);
+      if (m) { m.stock -= ci.qty; checkStockAlert(m); }
+    });
+    deductIngredients(cart);
+    addNotification(`Order #${order.order_num || order.id} placed — ₱${total.toFixed(2)}`);
+    showToast('✅ Order placed successfully!');
+    cart = [];
+    renderCart();
+    renderMenu();
+    gsap.fromTo('.cart-panel', {scale:.98,boxShadow:'0 0 0 0 #D4A853'}, {scale:1,boxShadow:'0 0 20px 4px #D4A85366',duration:.25,yoyo:true,repeat:1});
+  } catch(e) {
+    showToast('❌ '+e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Place Order';
+}
+
+function uploadGcashQr(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    gcashQrData = ev.target.result;
+    document.getElementById('gcashQrDisplay').innerHTML = `<img src="${gcashQrData}" alt="QR">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ORDER QUEUE
+// ──────────────────────────────────────────────────────────────────────────────
+async function renderQueue() {
+  const wrap = document.getElementById('queueTableWrap');
+  let qOrders = orders;
+  if (!OFFLINE_MODE) {
+    try {
+      const res = await api('GET', '/api/orders');
+      qOrders = res.orders || orders;
+      orders = qOrders;
+    } catch(e) {}
+  }
+
+  if (qOrders.length === 0) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>No orders yet</div>';
+    return;
+  }
+  wrap.innerHTML = `<table class="queue-table">
+    <thead><tr>
+      <th>#</th><th>Items</th><th>Type</th><th>Time</th><th>Total</th><th>Status</th><th>Action</th>
+    </tr></thead>
+    <tbody>${qOrders.map(o=>`
+      <tr>
+        <td><strong>#${o.order_num||o.id}</strong></td>
+        <td>${(o.items||[]).map(i=>`${i.emoji||'🧋'}×${i.qty}`).join(' ')}</td>
+        <td>Dine-in</td>
+        <td>${formatTime(o.created_at)}</td>
+        <td>₱${parseFloat(o.total).toFixed(2)}</td>
+        <td><span class="status-badge ${o.status}">${capitalize(o.status)}</span></td>
+        <td>${o.status!=='served'?`<button class="advance-btn" onclick="advanceOrder(${o.id})">${o.status==='preparing'?'Mark Ready':'Mark Served'}</button>`:'—'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+  gsap.fromTo('.queue-table', {opacity:0,y:10},{opacity:1,y:0,duration:.3});
+}
+
+async function advanceOrder(id) {
+  const o = orders.find(o=>o.id===id);
+  if (!o) return;
+  const next = o.status==='preparing'?'ready':'served';
+  try {
+    await api('PUT', `/api/orders/${id}`, {status:next});
+    o.status = next;
+    renderQueue();
+    showToast(`📦 Order #${o.order_num||o.id} → ${next}`);
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// DASHBOARD
+// ──────────────────────────────────────────────────────────────────────────────
+let dashFilter = 'today';
+function setDashFilter(f) {
+  dashFilter = f;
+  document.querySelectorAll('#page-dashboard .filter-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['today','week','month'][i]===f);
+  });
+  renderDashboard();
+}
+
+async function renderDashboard() {
+  let allOrders = orders;
+  if (!OFFLINE_MODE) {
+    try {
+      const [oRes] = await Promise.all([api('GET','/api/orders')]);
+      allOrders = oRes.orders || orders;
+      orders = allOrders;
+    } catch(e) {}
+  }
+
+  const now = new Date();
+  const filtered = allOrders.filter(o => {
+    const d = new Date(o.created_at);
+    if (dashFilter==='today') return d.toDateString()===now.toDateString();
+    if (dashFilter==='week') return (now-d)<7*864e5;
+    return (now-d)<30*864e5;
+  });
+
+  const revenue = filtered.reduce((s,o)=>s+parseFloat(o.total||0),0);
+  const lowStockCount = MENU.filter(m=>m.stock<=5).length + INGREDIENTS.filter(i=>i.stock<=i.threshold).length;
+
+  const animNum = (id, val, prefix='') => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    gsap.fromTo({n:0},{n:val,duration:.8,ease:'power2.out',onUpdate:function(){
+      el.textContent = prefix + (prefix==='₱' ? Math.round(this.targets()[0].n).toLocaleString() : Math.round(this.targets()[0].n));
+    }});
+  };
+  animNum('statOrders', filtered.length);
+  animNum('statRevenue', revenue, '₱');
+  animNum('statItems', MENU.length);
+  animNum('statLowStock', lowStockCount);
+
+  // trend labels
+  const setTrend = (id, val, label) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = label;
+    el.className = 'stat-trend' + (val < 0 ? ' down' : '');
+  };
+  setTrend('trendOrders', 1, `${filtered.length} order${filtered.length!==1?'s':''}`);
+  setTrend('trendRevenue', 1, dashFilter==='today'?'Today':'Period');
+  setTrend('trendItems', 1, `${MENU.filter(m=>m.available).length} available`);
+  setTrend('trendLowStock', lowStockCount>0?-1:1, lowStockCount>0?'Needs attention':'All stocked');
+
+  drawRevenueChart(filtered);
+  drawCategoryChart(filtered);
+  renderTopItems(filtered);
+}
+
+function drawRevenueChart(filtered) {
+  const canvas = document.getElementById('dashRevenueCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || canvas.parentElement.offsetWidth || 600;
+  const H = 180;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0,0,W,H);
+
+  // Build hourly/daily buckets
+  const now = new Date();
+  let labels = [], buckets = [];
+  if (dashFilter==='today') {
+    for (let h=0;h<24;h++) { labels.push(h%4===0?h+'h':''); buckets.push(0); }
+    filtered.forEach(o=>{
+      const h = new Date(o.created_at).getHours();
+      buckets[h] += parseFloat(o.total||0);
+    });
+  } else if (dashFilter==='week') {
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    for (let i=6;i>=0;i--) {
+      const d = new Date(now); d.setDate(d.getDate()-i);
+      labels.push(days[d.getDay()]); buckets.push(0);
+    }
+    filtered.forEach(o=>{
+      const d = new Date(o.created_at);
+      const diff = Math.floor((now-d)/864e5);
+      if (diff<7) buckets[6-diff] += parseFloat(o.total||0);
+    });
+  } else {
+    for (let i=29;i>=0;i--) {
+      const d = new Date(now); d.setDate(d.getDate()-i);
+      labels.push(i%5===0?(d.getMonth()+1)+'/'+(d.getDate()):''); buckets.push(0);
+    }
+    filtered.forEach(o=>{
+      const d = new Date(o.created_at);
+      const diff = Math.floor((now-d)/864e5);
+      if (diff<30) buckets[29-diff] += parseFloat(o.total||0);
+    });
+  }
+
+  const maxVal = Math.max(...buckets, 1);
+  const pad = {l:40,r:16,t:16,b:28};
+  const chartW = W-pad.l-pad.r;
+  const chartH = H-pad.t-pad.b;
+  const n = buckets.length;
+  const stepX = chartW/(n-1||1);
+
+  // Grid lines
+  ctx.strokeStyle = '#F0E4D4'; ctx.lineWidth = 1;
+  for (let i=0;i<=4;i++) {
+    const y = pad.t + chartH - (i/4)*chartH;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle = '#9B6240'; ctx.font = '10px DM Sans'; ctx.textAlign = 'right';
+    ctx.fillText('₱'+Math.round((i/4)*maxVal).toLocaleString(), pad.l-4, y+4);
+  }
+
+  // Area fill
+  const gradient = ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+  gradient.addColorStop(0,'rgba(155,98,64,0.22)');
+  gradient.addColorStop(1,'rgba(155,98,64,0.01)');
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t+chartH);
+  buckets.forEach((v,i)=>{
+    const x = pad.l + i*stepX;
+    const y = pad.t + chartH - (v/maxVal)*chartH;
+    i===0 ? ctx.lineTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.lineTo(pad.l+(n-1)*stepX, pad.t+chartH);
+  ctx.closePath(); ctx.fillStyle = gradient; ctx.fill();
+
+  // Line
+  ctx.beginPath(); ctx.strokeStyle = '#9B6240'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+  buckets.forEach((v,i)=>{
+    const x = pad.l + i*stepX;
+    const y = pad.t + chartH - (v/maxVal)*chartH;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Dots
+  buckets.forEach((v,i)=>{
+    if (v===0) return;
+    const x = pad.l + i*stepX;
+    const y = pad.t + chartH - (v/maxVal)*chartH;
+    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fillStyle = '#9B6240'; ctx.fill();
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+  });
+
+  // X labels
+  ctx.fillStyle = '#9B6240'; ctx.font = '10px DM Sans'; ctx.textAlign = 'center';
+  labels.forEach((l,i)=>{
+    if (!l) return;
+    const x = pad.l + i*stepX;
+    ctx.fillText(l, x, H-6);
+  });
+
+  const subEl = document.getElementById('revenueChartSub');
+  if (subEl) subEl.textContent = '₱'+filtered.reduce((s,o)=>s+parseFloat(o.total||0),0).toLocaleString()+' total';
+}
+
+function drawCategoryChart(filtered) {
+  const canvas = document.getElementById('dashCategoryCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 300;
+  const H = 160;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0,0,W,H);
+
+  const cats = ['Milk Tea','Fruit Tea','Slush','Other'];
+  const colors = ['#9B6240','#D4A853','#4A7C59','#C8956C'];
+  const totals = cats.map(cat =>
+    filtered.reduce((s,o) => s + (o.items||[]).filter(i=>{
+      const m = MENU.find(m=>m.name===i.name);
+      const icat = m?.category||'Other';
+      return (cat==='Other'&&!['Milk Tea','Fruit Tea','Slush'].includes(icat)) || icat===cat;
+    }).reduce((ss,i)=>ss+i.price*i.qty,0), 0)
+  );
+  const grandTotal = totals.reduce((s,v)=>s+v,0);
+
+  if (grandTotal===0) {
+    ctx.fillStyle = '#ccc'; ctx.font = '13px DM Sans'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('No data for period', W/2, H/2); return;
+  }
+
+  // Donut chart
+  const cx = W/2, cy = H/2, ro = Math.min(cx,cy)-10, ri = ro*0.55;
+  let angle = -Math.PI/2;
+  totals.forEach((val,i)=>{
+    if (val===0) return;
+    const slice = (val/grandTotal)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,ro,angle,angle+slice);
+    ctx.closePath(); ctx.fillStyle = colors[i]; ctx.fill();
+    ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
+    angle += slice;
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,ri,0,Math.PI*2);
+  ctx.fillStyle='white'; ctx.fill();
+  ctx.fillStyle='#3D1C0A'; ctx.font='bold 13px Playfair Display';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('₱'+Math.round(grandTotal).toLocaleString(), cx, cy-6);
+  ctx.font='10px DM Sans'; ctx.fillStyle='#9B6240';
+  ctx.fillText('total', cx, cy+9);
+
+  // Legend
+  const legEl = document.getElementById('dashCatLegend');
+  if (legEl) legEl.innerHTML = cats.map((cat,i)=>{
+    const pct = grandTotal>0?((totals[i]/grandTotal)*100).toFixed(0):'0';
+    return `<div class="legend-item" style="padding:4px 0">
+      <div class="legend-dot" style="background:${colors[i]};border-radius:50%"></div>
+      <span class="legend-label">${cat}</span>
+      <span class="legend-val">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderTopItems(filtered) {
+  const wrap = document.getElementById('dashTopItems');
+  if (!wrap) return;
+  const counts = {};
+  filtered.forEach(o=>(o.items||[]).forEach(i=>{
+    counts[i.name] = (counts[i.name]||0) + i.qty;
+  }));
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if (!sorted.length) { wrap.innerHTML='<div class="empty-state" style="padding:30px 10px;font-size:13px">No orders yet</div>'; return; }
+  const max = sorted[0][1];
+  wrap.innerHTML = sorted.map(([name,qty],i)=>`
+    <div class="top-item-row">
+      <div class="top-item-rank">${i+1}</div>
+      <div class="top-item-name">${name}</div>
+      <div class="top-item-bar-wrap"><div class="top-item-bar" style="width:${(qty/max*100).toFixed(0)}%"></div></div>
+      <div class="top-item-val">${qty}×</div>
+    </div>
+  `).join('');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// MENU MANAGEMENT
+// ──────────────────────────────────────────────────────────────────────────────
+function renderMenuMgmt() {
+  const grid = document.getElementById('menuMgmtGrid');
+  if (!grid) return;
+  grid.innerHTML = MENU.map(m=>`
+    <div class="mgmt-card" id="mgmt-${m.id}">
+      <div class="mgmt-thumb" onclick="document.getElementById('img-${m.id}').click()">
+        ${m.image ? `<img src="${m.image}" alt="${m.name}">` : m.emoji}
+      </div>
+      <input type="file" id="img-${m.id}" accept="image/*" onchange="uploadMenuImg(event,${m.id})">
+      <div class="mgmt-info">
+        <div class="mgmt-name">${m.name}</div>
+        <div class="mgmt-details">${m.category} • ₱${parseFloat(m.price).toFixed(2)} • Stock: ${m.stock} • ${m.available ? 'Available' : 'Unavailable'}</div>
+      </div>
+      <div class="mgmt-actions">
+        <button class="edit-btn" onclick="openEditMenuModal(${m.id})">Edit</button>
+        <button class="del-btn" onclick="deleteMenuItem(${m.id})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function addMenuItem() {
+  const name = document.getElementById('newName').value.trim();
+  const price = parseFloat(document.getElementById('newPrice').value);
+  const category = document.getElementById('newCat').value;
+  const emoji = document.getElementById('newEmoji').value || '🧋';
+  const stock = parseInt(document.getElementById('newStock').value) || 50;
+  if (!name || !price) { showToast('⚠️ Fill in name and price'); return; }
+  try {
+    const res = await api('POST', '/api/menu', {name,price,category,emoji,stock});
+    const item = res.item;
+    if (!OFFLINE_MODE) MENU.push(item);
+
+    // Auto-link ingredients
+    autoLinkIngredients(item);
+
+    ['newName','newPrice','newEmoji','newStock'].forEach(id=>document.getElementById(id).value='');
+    renderMenu(); renderMenuMgmt(); renderInventory();
+    showToast('✅ Item added!');
+    gsap.fromTo(`#mgmt-${item.id}`, {opacity:0,scale:.8},{opacity:1,scale:1,duration:.4,ease:'back.out(1.4)'});
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+function autoLinkIngredients(item) {
+  const name = item.name.toLowerCase();
+  const links = [];
+
+  INGREDIENTS.forEach(ing => {
+    const ingName = ing.name.toLowerCase();
+    let qty = 0;
+
+    // Basic keyword matching for common ingredients
+    if (name.includes('milk') && ingName.includes('milk')) qty = 0.3;
+    else if (name.includes('tea') && ingName.includes('tea')) qty = 0.01;
+    else if (name.includes('tapioca') && ingName.includes('tapioca')) qty = 0.05;
+    else if (name.includes('pearl') && ingName.includes('tapioca')) qty = 0.05;
+    else if (name.includes('sugar') && ingName.includes('sugar')) qty = 0.02;
+    else if (name.includes('syrup') && ingName.includes('syrup')) qty = 0.02;
+    else if (name.includes('matcha') && ingName.includes('matcha')) qty = 0.015;
+    else if (name.includes('taro') && ingName.includes('taro')) qty = 0.02;
+    else if (name.includes('brown') && ingName.includes('brown')) qty = 0.05;
+    else if (name.includes('mango') && ingName.includes('mango')) qty = 0.1;
+    else if (name.includes('strawberry') && ingName.includes('strawberry')) qty = 0.1;
+    else if (name.includes('lychee') && ingName.includes('lychee')) qty = 0.05;
+    else if (name.includes('passion') && ingName.includes('passion')) qty = 0.05;
+    else if (ingName.includes('cups') || ingName.includes('lids')) qty = 1; // Always include packaging
+
+    if (qty > 0) {
+      links.push({ingId: ing.id, qty});
+    }
+  });
+
+  if (links.length > 0) {
+    ITEM_INGREDIENTS[item.id] = links;
+  }
+}
+
+async function updateMenuItem(id, field, value) {
+  const m = MENU.find(m=>m.id===id);
+  if (!m) return;
+  m[field] = field==='price' ? parseFloat(value) : value;
+  try { await api('PUT', `/api/menu/${id}`, {[field]: m[field]}); }
+  catch(e) { showToast('❌ '+e.message); }
+}
+
+async function toggleMenuAvail(id, val) {
+  const m = MENU.find(m=>m.id===id);
+  if (!m) return;
+  m.available = val;
+  try { await api('PUT', `/api/menu/${id}`, {available: val}); renderMenu(); }
+  catch(e) { showToast('❌ '+e.message); }
+}
+
+async function deleteMenuItem(id) {
+  if (!confirm('Delete this item?')) return;
+  try {
+    await api('DELETE', `/api/menu/${id}`);
+    MENU = MENU.filter(m=>m.id!==id);
+    renderMenu(); renderMenuMgmt();
+    showToast('🗑️ Item deleted');
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+function uploadMenuImg(e, id) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    const imgData = ev.target.result;
+    const m = MENU.find(m=>m.id===id);
+    if (m) m.image = imgData;
+    try { await api('PUT', `/api/menu/${id}`, {image: imgData}); }
+    catch(e) {}
+    renderMenuMgmt(); renderMenu();
+  };
+  reader.readAsDataURL(file);
+}
+
+let editingMenuId = null;
+
+function openEditMenuModal(id) {
+  const item = MENU.find(m=>m.id===id);
+  if (!item) return;
+  editingMenuId = id;
+  document.getElementById('editMenuImage').innerHTML = item.image ? `<img src="${item.image}" alt="${item.name}">` : item.emoji;
+  document.getElementById('editMenuName').value = item.name;
+  document.getElementById('editMenuEmoji').value = item.emoji;
+  document.getElementById('editMenuPrice').value = item.price;
+  document.getElementById('editMenuCategory').value = item.category;
+  document.getElementById('editMenuStock').value = item.stock;
+  document.getElementById('editMenuAvailable').checked = item.available;
+  openModal('editMenuModal');
+}
+
+function uploadEditMenuImg(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('editMenuImage').innerHTML = `<img src="${ev.target.result}" alt="Preview">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveEditMenu() {
+  if (!editingMenuId) return;
+  const item = MENU.find(m=>m.id===editingMenuId);
+  if (!item) return;
+
+  const name = document.getElementById('editMenuName').value.trim();
+  const emoji = document.getElementById('editMenuEmoji').value.trim();
+  const price = parseFloat(document.getElementById('editMenuPrice').value);
+  const category = document.getElementById('editMenuCategory').value;
+  const stock = parseInt(document.getElementById('editMenuStock').value);
+  const available = document.getElementById('editMenuAvailable').checked;
+
+  if (!name || !price) { showToast('⚠️ Fill in name and price'); return; }
+
+  item.name = name;
+  item.emoji = emoji;
+  item.price = price;
+  item.category = category;
+  item.stock = stock;
+  item.available = available;
+
+  // Handle image upload
+  const imgInput = document.getElementById('editMenuImageInput');
+  if (imgInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = async ev => {
+      item.image = ev.target.result;
+      try { await api('PUT', `/api/menu/${editingMenuId}`, {image: item.image}); }
+      catch(e) {}
+      renderMenu(); renderMenuMgmt();
+    };
+    reader.readAsDataURL(imgInput.files[0]);
+  } else {
+    try { await api('PUT', `/api/menu/${editingMenuId}`, {name, emoji, price, category, stock, available}); }
+    catch(e) { showToast('❌ '+e.message); }
+  }
+
+  closeModal('editMenuModal');
+  renderMenu(); renderMenuMgmt();
+  showToast('✅ Product updated!');
+}
+
+function openGcashModal() {
+  document.getElementById('gcashModalQr').innerHTML = gcashQrData ? `<img src="${gcashQrData}" alt="QR">` : '📷';
+  document.getElementById('gcashNumber').value = localStorage.getItem('gcashNumber') || '';
+  document.getElementById('gcashName').value = localStorage.getItem('gcashName') || '';
+  openModal('gcashModal');
+}
+
+function uploadGcashModalQr(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    gcashQrData = ev.target.result;
+    document.getElementById('gcashModalQr').innerHTML = `<img src="${gcashQrData}" alt="QR">`;
+    updateGcashDisplay();
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveGcashSettings() {
+  const number = document.getElementById('gcashNumber').value.trim();
+  const name = document.getElementById('gcashName').value.trim();
+  localStorage.setItem('gcashNumber', number);
+  localStorage.setItem('gcashName', name);
+  updateGcashDisplay();
+  closeModal('gcashModal');
+  showToast('✅ GCash settings saved!');
+}
+
+function updateGcashDisplay() {
+  const display = document.getElementById('gcashQrDisplay');
+  const numDisplay = document.getElementById('gcashNumDisplay');
+  if (gcashQrData) {
+    display.innerHTML = `<img src="${gcashQrData}" alt="QR">`;
+    const name = localStorage.getItem('gcashName') || '';
+    const number = localStorage.getItem('gcashNumber') || '';
+    numDisplay.textContent = name || number || 'QR code uploaded';
+  } else {
+    display.innerHTML = '📷';
+    numDisplay.textContent = 'Tap to edit QR code';
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// INVENTORY
+// ──────────────────────────────────────────────────────────────────────────────
+function renderInventory() {
+  const grid = document.getElementById('ingGrid');
+  if (!grid) return;
+  if (!INGREDIENTS.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🫙</div>No ingredients yet</div>';
+    return;
+  }
+  grid.innerHTML = INGREDIENTS.map(ing => {
+    const pct = Math.min(100, (ing.stock / (ing.threshold * 5 || 10)) * 100);
+    const barClass = ing.stock <= ing.threshold ? 'critical' : ing.stock <= ing.threshold * 2 ? 'warn' : 'ok';
+    // Find items that use this ingredient
+    const linkedItems = Object.entries(ITEM_INGREDIENTS)
+      .filter(([,links])=>links.some(l=>l.ingId===ing.id))
+      .map(([menuId])=>MENU.find(m=>m.id===parseInt(menuId))?.name)
+      .filter(Boolean);
+    return `
+    <div class="ing-card" id="ing-${ing.id}">
+      <div class="ing-thumb">${ing.emoji}</div>
+      <div class="ing-info">
+        <div class="ing-name">${ing.name}</div>
+        <div class="ing-details">${ing.stock} ${ing.unit} • Threshold: ${ing.threshold} ${ing.unit}</div>
+        <div class="ing-stock-row">
+          <div class="ing-stock-bar-wrap"><div class="ing-stock-bar ${barClass}" style="width:${pct.toFixed(0)}%"></div></div>
+          <div class="ing-stock-label" style="color:${barClass==='critical'?'var(--red)':barClass==='warn'?'var(--accent)':'var(--green)'}">${ing.stock} ${ing.unit}</div>
+        </div>
+        ${linkedItems.length ? `<div class="ing-linked-items">Used in: ${linkedItems.map(n=>`<span class="ing-link-chip">${n}</span>`).join('')}</div>` : '<div class="ing-linked-items" style="color:var(--cream-mid)">Not linked to any items</div>'}
+      </div>
+      <div class="ing-actions">
+        <input type="number" class="ing-qty-input" id="restock-${ing.id}" placeholder="qty" min="0">
+        <button class="ing-restock-btn" onclick="restockIngredient(${ing.id})">+ Restock</button>
+        <button class="ing-del-btn" onclick="deleteIngredient(${ing.id})">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+  gsap.fromTo('.ing-card', {opacity:0,y:14,scale:.97},{opacity:1,y:0,scale:1,duration:.3,stagger:.04,ease:'power2.out'});
+}
+
+function addIngredient() {
+  const name = document.getElementById('ingName').value.trim();
+  const unit = document.getElementById('ingUnit').value;
+  const stock = parseFloat(document.getElementById('ingStock').value) || 0;
+  const threshold = parseFloat(document.getElementById('ingThreshold').value) || 10;
+  const emoji = document.getElementById('ingEmoji').value.trim() || '🫙';
+  if (!name) { showToast('⚠️ Enter ingredient name'); return; }
+  ingIdCounter++;
+  INGREDIENTS.push({id:ingIdCounter, name, emoji, unit, stock, threshold});
+  ['ingName','ingStock','ingThreshold','ingEmoji'].forEach(id=>document.getElementById(id).value='');
+  renderInventory();
+  showToast('✅ Ingredient added!');
+}
+
+function restockIngredient(id) {
+  const ing = INGREDIENTS.find(i=>i.id===id);
+  const inp = document.getElementById('restock-'+id);
+  const qty = parseFloat(inp?.value);
+  if (!ing || !qty || qty<=0) { showToast('⚠️ Enter a valid quantity'); return; }
+  ing.stock += qty;
+  inp.value = '';
+  renderInventory();
+  showToast(`✅ Restocked ${ing.name} +${qty} ${ing.unit}`);
+}
+
+function deleteIngredient(id) {
+  if (!confirm('Delete this ingredient? It will be unlinked from all menu items.')) return;
+  INGREDIENTS = INGREDIENTS.filter(i=>i.id!==id);
+  // Unlink from all items
+  Object.keys(ITEM_INGREDIENTS).forEach(k=>{
+    ITEM_INGREDIENTS[k] = ITEM_INGREDIENTS[k].filter(l=>l.ingId!==id);
+  });
+  renderInventory();
+  showToast('🗑️ Ingredient deleted');
+}
+
+function openLinkIngredients(menuId) {
+  linkingMenuId = menuId;
+  const item = MENU.find(m=>m.id===menuId);
+  if (!item) return;
+  document.getElementById('linkIngModalTitle').textContent = `🫙 Ingredients for ${item.name}`;
+  const existing = ITEM_INGREDIENTS[menuId] || [];
+  document.getElementById('linkIngList').innerHTML = INGREDIENTS.length === 0
+    ? '<p style="color:var(--brown-warm);font-size:13px">No ingredients defined yet. Add some in the Inventory tab.</p>'
+    : INGREDIENTS.map(ing=>{
+        const linked = existing.find(l=>l.ingId===ing.id);
+        return `<div class="link-ing-row">
+          <span style="font-size:18px">${ing.emoji}</span>
+          <span class="link-ing-name">${ing.name}</span>
+          <input type="number" class="link-ing-qty" id="link-qty-${ing.id}" placeholder="0" min="0" step="0.001" value="${linked?linked.qty:''}">
+          <span class="link-ing-unit">${ing.unit}</span>
+        </div>`;
+      }).join('');
+  openModal('linkIngModal');
+}
+
+function saveLinkIngredients() {
+  if (!linkingMenuId) return;
+  const links = [];
+  INGREDIENTS.forEach(ing=>{
+    const val = parseFloat(document.getElementById('link-qty-'+ing.id)?.value);
+    if (val && val > 0) links.push({ingId: ing.id, qty: val});
+  });
+  ITEM_INGREDIENTS[linkingMenuId] = links;
+  closeModal('linkIngModal');
+  showToast('✅ Ingredients linked!');
+  renderInventory();
+}
+
+// Deduct ingredients when order is placed
+function deductIngredients(orderItems) {
+  orderItems.forEach(ci => {
+    const links = ITEM_INGREDIENTS[ci.id] || [];
+    links.forEach(link => {
+      const ing = INGREDIENTS.find(i=>i.id===link.ingId);
+      if (ing) {
+        ing.stock = Math.max(0, ing.stock - link.qty * ci.qty);
+        if (ing.stock <= ing.threshold && !stockAlertState['ing_'+ing.id]) {
+          stockAlertState['ing_'+ing.id] = true;
+          addNotification(`⚠️ Low ingredient: "${ing.name}" (${ing.stock.toFixed(2)} ${ing.unit} left)`);
+        }
+      }
+    });
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// REPORTS
+// ──────────────────────────────────────────────────────────────────────────────
+function setReportFilter(f) {
+  reportFilter = f;
+  document.querySelectorAll('#page-reports .filter-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['today','week','month'][i]===f);
+  });
+  renderReports();
+}
+
+async function renderReports() {
+  let allOrders = orders;
+  if (!OFFLINE_MODE) {
+    try {
+      const res = await api('GET', '/api/orders');
+      allOrders = res.orders || orders;
+    } catch(e) {}
+  }
+
+  const now = new Date();
+  const filtered = allOrders.filter(o => {
+    const d = new Date(o.created_at);
+    if (reportFilter==='today') return d.toDateString()===now.toDateString();
+    if (reportFilter==='week') return (now-d)<7*864e5;
+    return (now-d)<30*864e5;
+  });
+
+  const cats = ['Milk Tea','Fruit Tea','Slush','Other'];
+  const colors = ['#9B6240','#D4A853','#4A7C59','#C8956C'];
+  const totals = cats.map(cat => {
+    return filtered.reduce((s,o) => {
+      return s + (o.items||[]).filter(i=>{
+        const m = MENU.find(m=>m.name===i.name);
+        const icat = m?.category || 'Other';
+        return (cat==='Other' && !['Milk Tea','Fruit Tea','Slush'].includes(icat)) || icat===cat;
+      }).reduce((ss,i)=>ss+i.price*i.qty,0);
+    },0);
+  });
+  const grandTotal = totals.reduce((s,v)=>s+v,0);
+
+  // Draw canvas pie chart
+  const canvas = document.getElementById('reportCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 500; const H = 260;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0,0,W,H);
+
+  if (grandTotal === 0) {
+    ctx.fillStyle = '#ccc'; ctx.font = '14px DM Sans'; ctx.textAlign = 'center';
+    ctx.fillText('No data for selected period', W/2, H/2);
+  } else {
+    const cx = W/2; const cy = H/2; const r = Math.min(cx,cy)-20;
+    let angle = -Math.PI/2;
+    totals.forEach((val,i) => {
+      if (val===0) return;
+      const slice = (val/grandTotal)*Math.PI*2;
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,angle,angle+slice);
+      ctx.closePath(); ctx.fillStyle = colors[i]; ctx.fill();
+      ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+      angle += slice;
+    });
+    // Center circle
+    ctx.beginPath(); ctx.arc(cx,cy,r*.52,0,Math.PI*2);
+    ctx.fillStyle = 'white'; ctx.fill();
+    ctx.fillStyle = '#3D1C0A'; ctx.font = 'bold 15px Playfair Display';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('₱'+Math.round(grandTotal).toLocaleString(), cx, cy);
+  }
+
+  // Legend
+  document.getElementById('reportLegend').innerHTML = cats.map((cat,i)=>{
+    const pct = grandTotal>0 ? ((totals[i]/grandTotal)*100).toFixed(1) : '0.0';
+    return `<div class="legend-item">
+      <div class="legend-dot" style="background:${colors[i]}"></div>
+      <span class="legend-label">${cat}</span>
+      <span class="legend-val">₱${totals[i].toFixed(2)} (${pct}%)</span>
+    </div>`;
+  }).join('');
+  document.getElementById('reportSummary').textContent = `${filtered.length} orders · ₱${grandTotal.toFixed(2)} total revenue`;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// TRANSACTIONS
+// ──────────────────────────────────────────────────────────────────────────────
+async function renderTransactions() {
+  let txs = transactionLogs;
+  try {
+    const res = await api('GET', '/api/transactions');
+    txs = res.transactions || transactionLogs;
+  } catch(e) {}
+  const wrap = document.getElementById('transTableWrap');
+  if (!txs.length) { wrap.innerHTML='<div class="empty-state"><div class="empty-icon">💳</div>No transactions yet</div>'; return; }
+  wrap.innerHTML = `<table class="data-table">
+    <thead><tr><th>#</th><th>Time</th><th>Staff</th><th>Payment</th><th>Items</th><th>Total</th></tr></thead>
+    <tbody>${txs.map(t=>`
+      <tr>
+        <td><strong>#${t.order_num||t.id}</strong></td>
+        <td>${formatTime(t.created_at)}</td>
+        <td>${t.staff||'—'}</td>
+        <td><span class="badge badge-${t.payment}">${capitalize(t.payment||'cash')}</span></td>
+        <td>${(t.items||[]).map(i=>i.name).join(', ')}</td>
+        <td><strong>₱${parseFloat(t.total||0).toFixed(2)}</strong></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  gsap.fromTo('.data-table', {opacity:0,y:10},{opacity:1,y:0,duration:.3});
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// USER LOGS
+// ──────────────────────────────────────────────────────────────────────────────
+async function renderUserLogs() {
+  let logs = userLogs;
+  try {
+    const res = await api('GET', '/api/logs');
+    logs = res.logs || userLogs;
+  } catch(e) {}
+  const wrap = document.getElementById('userLogsTableWrap');
+  if (!logs.length) { wrap.innerHTML='<div class="empty-state"><div class="empty-icon">🔐</div>No login activity</div>'; return; }
+  wrap.innerHTML = `<table class="data-table">
+    <thead><tr><th>Time</th><th>Username</th><th>Role</th></tr></thead>
+    <tbody>${logs.map(l=>`
+      <tr>
+        <td>${formatTime(l.timestamp||l.created_at)}</td>
+        <td>${l.username}</td>
+        <td><span class="badge" style="background:${l.role==='admin'?'#F8D7DA':'#D1E7DD'};color:${l.role==='admin'?'#721C24':'#0A5C2A'}">${capitalize(l.role)}</span></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// SETTINGS
+// ──────────────────────────────────────────────────────────────────────────────
+async function renderSettings() {
+  if (!currentUser) return;
+  document.getElementById('profileDisplayName').value = currentUser.display_name || '';
+  document.getElementById('profileUsername').value = currentUser.username || '';
+  document.getElementById('profileDisplayNameShow').textContent = currentUser.display_name || currentUser.username;
+  const avatarEl = document.getElementById('profileAvatarDisplay');
+  if (currentUser.image) avatarEl.innerHTML = `<img src="${currentUser.image}" alt="avatar">`;
+  else avatarEl.textContent = '👤';
+
+  // Staff list
+  let users = ACCOUNTS;
+  try {
+    const res = await api('GET', '/api/users');
+    users = res.users || ACCOUNTS;
+    if (!OFFLINE_MODE) ACCOUNTS = users;
+  } catch(e) {}
+  renderStaffList(users);
+}
+
+function renderStaffList(users) {
+  const staffOnly = users.filter(u=>u.role==='staff');
+  document.getElementById('staffList').innerHTML = staffOnly.map(u=>`
+    <div class="staff-row">
+      <div class="staff-av">${u.image ? `<img src="${u.image}" alt="">` : (u.display_name?.[0]||'S')}</div>
+      <div class="staff-info">
+        <div class="sname">${u.display_name||u.username}</div>
+        <div class="srole">@${u.username}</div>
+      </div>
+      <button class="staff-del" onclick="deleteStaff(${u.id})">🗑️</button>
+    </div>
+  `).join('') || '<div style="color:var(--brown-warm);font-size:13px;padding:10px 0">No staff accounts</div>';
+}
+
+async function saveProfile() {
+  const display_name = document.getElementById('profileDisplayName').value.trim();
+  const username = document.getElementById('profileUsername').value.trim();
+  const password = document.getElementById('profilePassword').value;
+  const data = {display_name, username};
+  if (password) data.password = password;
+  if (currentUser.image) data.image = currentUser.image;
+  try {
+    await api('PUT', `/api/users/${currentUser.id}`, data);
+    currentUser = {...currentUser, ...data};
+    document.getElementById('navUserName').textContent = currentUser.display_name || currentUser.username;
+    document.getElementById('profileDisplayNameShow').textContent = currentUser.display_name || currentUser.username;
+    updateNavAvatar();
+    showToast('✅ Profile saved!');
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+async function addStaff() {
+  const display_name = document.getElementById('newStaffDisplay').value.trim();
+  const username = document.getElementById('newStaffUser').value.trim();
+  const password = document.getElementById('newStaffPass').value;
+  if (!username || !password) { showToast('⚠️ Fill username & password'); return; }
+  try {
+    const res = await api('POST', '/api/users', {display_name,username,password,role:'staff'});
+    if (!OFFLINE_MODE) ACCOUNTS.push(res.user);
+    ['newStaffDisplay','newStaffUser','newStaffPass'].forEach(id=>document.getElementById(id).value='');
+    renderSettings();
+    showToast('✅ Staff added!');
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+async function deleteStaff(id) {
+  if (!confirm('Delete this staff account?')) return;
+  try {
+    await api('DELETE', `/api/users/${id}`);
+    ACCOUNTS = ACCOUNTS.filter(a=>a.id!==id);
+    renderSettings();
+    showToast('🗑️ Staff removed');
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+function uploadProfilePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    currentUser.image = ev.target.result;
+    const el = document.getElementById('profileAvatarDisplay');
+    el.innerHTML = `<img src="${currentUser.image}" alt="avatar">`;
+    updateNavAvatar();
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateNavAvatar() {
+  const el = document.getElementById('navAvatar');
+  if (currentUser?.image) el.innerHTML = `<img src="${currentUser.image}" alt="avatar">`;
+  else el.textContent = currentUser?.display_name?.[0]?.toUpperCase() || '👤';
+}
+
+function saveBranding() {
+  const name = document.getElementById('sysNameInput').value.trim() || 'PearlHouse';
+  const emoji = document.getElementById('sysLogoEmoji').value.trim() || '🧋';
+  document.getElementById('sysNameNav').textContent = name;
+  document.getElementById('loginTitle').textContent = name;
+  if (sysLogoData) {
+    document.getElementById('navLogo').innerHTML = `<img src="${sysLogoData}" style="width:28px;height:28px;object-fit:cover;border-radius:6px">`;
+    document.getElementById('loginLogoIcon').innerHTML = `<img src="${sysLogoData}" style="width:48px;height:48px;object-fit:cover;border-radius:12px">`;
+  } else {
+    document.getElementById('navLogo').textContent = emoji;
+    document.getElementById('loginLogoIcon').textContent = emoji;
+  }
+  showToast('✅ Branding updated!');
+}
+
+function uploadSysLogo(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { sysLogoData = ev.target.result; showToast('Logo ready — click Save Branding'); };
+  reader.readAsDataURL(file);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ──────────────────────────────────────────────────────────────────────────────
+function addNotification(msg) {
+  notifications.unshift({id:Date.now(), text:msg, time:new Date().toISOString(), read:false});
+  renderNotifBadge(); renderNotifPanel();
+}
+
+function renderNotifBadge() {
+  const unread = notifications.filter(n=>!n.read).length;
+  const badge = document.getElementById('notifBadge');
+  badge.textContent = unread; badge.style.display = unread>0?'flex':'none';
+}
+
+function renderNotifPanel() {
+  const list = document.getElementById('notifList');
+  if (!notifications.length) { list.innerHTML='<div style="padding:20px;text-align:center;color:var(--brown-warm);font-size:13px">No notifications</div>'; return; }
+  list.innerHTML = notifications.slice(0,20).map(n=>`
+    <div class="notif-item ${n.read?'':'unread'}">
+      <div class="notif-dot ${n.read?'read':''}"></div>
+      <div><div class="notif-text">${n.text}</div><div class="notif-time">${formatTime(n.time)}</div></div>
+    </div>`).join('');
+}
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notifPanel');
+  const isVisible = panel.style.display==='block';
+  if (isVisible) {
+    gsap.to(panel, {opacity:0,y:-8,duration:.2,onComplete:()=>panel.style.display='none'});
+  } else {
+    panel.style.display = 'block'; panel.style.opacity = '0';
+    gsap.to(panel, {opacity:1,y:0,duration:.25,ease:'power2.out'});
+    renderNotifPanel();
+  }
+}
+
+function markAllRead() {
+  notifications.forEach(n=>n.read=true);
+  renderNotifBadge(); renderNotifPanel();
+}
+
+function checkStockAlert(item) {
+  if (item.stock <= 1 && !stockAlertState[item.id]) {
+    stockAlertState[item.id] = true;
+    addNotification(`⚠️ Low stock: "${item.name}" (${item.stock} left)`);
+  }
+}
+
+// Close notif panel on outside click
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notifPanel');
+  const btn = document.getElementById('notifBtn');
+  if (panel.style.display==='block' && !panel.contains(e.target) && !btn.contains(e.target)) {
+    gsap.to(panel, {opacity:0,y:-8,duration:.2,onComplete:()=>panel.style.display='none'});
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  const parts = msg.match(/^(\p{Emoji})\s+(.+)$/u);
+  el.innerHTML = parts ? `<span class="toast-icon">${parts[1]}</span>${parts[2]}` : msg;
+  document.getElementById('toast-container').appendChild(el);
+  animateToast(el);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// MODALS
+// ──────────────────────────────────────────────────────────────────────────────
+function openModal(id) {
+  const overlay = document.getElementById(id);
+  overlay.classList.add('show');
+  gsap.fromTo('#'+id+' .modal-box', {scale:.88,opacity:0},{scale:1,opacity:1,duration:.3,ease:'back.out(1.4)'});
+}
+function closeModal(id) {
+  const overlay = document.getElementById(id);
+  gsap.to('#'+id+' .modal-box', {scale:.88,opacity:0,duration:.2,ease:'power2.in',onComplete:()=>overlay.classList.remove('show')});
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// UTILS
+// ──────────────────────────────────────────────────────────────────────────────
+function formatTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-PH',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});
+}
+function capitalize(s) { return s ? s[0].toUpperCase()+s.slice(1) : ''; }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  // Try to connect to backend first
+  try {
+    const r = await fetch(BASE_URL + '/api/health', {credentials:'include'});
+    if (!r.ok) throw new Error();
+  } catch(e) {
+    OFFLINE_MODE = true;
+    MENU = [...DEMO_MENU];
+    ACCOUNTS = [...DEMO_ACCOUNTS];
+    console.info('Running in offline/demo mode');
+  }
+
+  document.getElementById('loadingOverlay').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  animateLoginCard();
+
+  // Enter key on login
+  ['loginUser','loginPass'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+  });
+});
+</script>
+</body>
+</html>
